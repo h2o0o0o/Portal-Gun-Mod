@@ -3,8 +3,17 @@ dofile( "$SURVIVAL_DATA/Scripts/util.lua" )
 dofile( "$SURVIVAL_DATA/Scripts/game/survival_shapes.lua" )
 dofile( "$SURVIVAL_DATA/Scripts/game/survival_projectiles.lua" )
 
-local Damage = 28
-
+---@class PortalGun : ToolClass
+---@field aiming boolean
+---@field fpAnimations table
+---@field tpAnimations table
+---@field shootEffect Effect
+---@field shootEffectFP Effect
+---@field aimFireMode table
+---@field normalFireMode table
+---@field blendTime integer
+---@field aimBlendSpeed integer
+---@field portals AreaTrigger[]
 PortalGun = class()
 
 local renderables = {
@@ -27,6 +36,10 @@ function PortalGun.client_onCreate( self )
 	self.shootEffectFP = sm.effect.createEffect( "SpudgunBasic - FPBasicMuzzel" )
 end
 
+function PortalGun:server_onCreate()
+	self.portals = {}
+	self.portal_connection = {}
+end
 
 
 function PortalGun.client_onRefresh( self )
@@ -549,95 +562,91 @@ function PortalGun.calculateFpMuzzlePos( self )
 	return self.tool:getFpBonePos( "pejnt_barrel" ) + sm.vec3.lerp( muzzlePos45, muzzlePos90, fovScale )
 end
 
-function PortalGun.cl_onPrimaryUse( self, state )
-	if self.tool:getOwner().character == nil then
+---@param owner AreaTrigger
+function PortalGun:server_onTriggerEnter(owner, data)
+	if self.portal_cooldown then
+		self.portal_cooldown = nil
 		return
 	end
 
-	if self.fireCooldownTimer <= 0.0 and state == sm.tool.interactState.start then
+	local v_other_portal = self.portals[self.portal_connection[owner.id]]
+	print(v_other_portal:getWorldPosition(), owner.id)
 
-		if not sm.game.getEnableAmmoConsumption() or sm.container.canSpend( sm.localPlayer.getInventory(), obj_plantables_potato, 1 ) then
-			local firstPerson = self.tool:isInFirstPersonView()
-
-			local dir = sm.localPlayer.getDirection()
-
-			local firePos = self:calculateFirePosition()
-			local fakePosition = self:calculateTpMuzzlePos()
-			local fakePositionSelf = fakePosition
-			if firstPerson then
-				fakePositionSelf = self:calculateFpMuzzlePos()
-			end
-
-			-- Aim assist
-			if not firstPerson then
-				local raycastPos = sm.camera.getPosition() + sm.camera.getDirection() * sm.camera.getDirection():dot( GetOwnerPosition( self.tool ) - sm.camera.getPosition() )
-				local hit, result = sm.localPlayer.getRaycast( 250, raycastPos, sm.camera.getDirection() )
-				if hit then
-					local norDir = sm.vec3.normalize( result.pointWorld - firePos )
-					local dirDot = norDir:dot( dir )
-
-					if dirDot > 0.96592583 then -- max 15 degrees off
-						dir = norDir
-					else
-						local radsOff = math.asin( dirDot )
-						dir = sm.vec3.lerp( dir, norDir, math.tan( radsOff ) / 3.7320508 ) -- if more than 15, make it 15
-					end
-				end
-			end
-
-			dir = dir:rotate( math.rad( 0.955 ), sm.camera.getRight() ) -- 50 m sight calibration
-
-			-- Spread
-			local fireMode = self.aiming and self.aimFireMode or self.normalFireMode
-			local recoilDispersion = 1.0 - ( math.max(fireMode.minDispersionCrouching, fireMode.minDispersionStanding ) + fireMode.maxMovementDispersion )
-
-			local spreadFactor = fireMode.spreadCooldown > 0.0 and clamp( self.spreadCooldownTimer / fireMode.spreadCooldown, 0.0, 1.0 ) or 0.0
-			spreadFactor = clamp( self.movementDispersion + spreadFactor * recoilDispersion, 0.0, 1.0 )
-			local spreadDeg =  fireMode.spreadMinAngle + ( fireMode.spreadMaxAngle - fireMode.spreadMinAngle ) * spreadFactor
-
-			dir = sm.noise.gunSpread( dir, spreadDeg )
-
-			local owner = self.tool:getOwner()
-			if owner then
-				sm.projectile.projectileAttack( projectile_potato, Damage, firePos, dir * fireMode.fireVelocity, owner, fakePosition, fakePositionSelf )
-			end
-
-			-- Timers
-			self.fireCooldownTimer = fireMode.fireCooldown
-			self.spreadCooldownTimer = math.min( self.spreadCooldownTimer + fireMode.spreadIncrement, fireMode.spreadCooldown )
-			self.sprintCooldownTimer = self.sprintCooldown
-
-			-- Send TP shoot over network and dircly to self
-			self:onShoot( dir )
-			self.network:sendToServer( "sv_n_onShoot", dir )
-
-			-- Play FP shoot animation
-			setFpAnimation( self.fpAnimations, self.aiming and "aimShoot" or "shoot", 0.05 )
-		else
-			local fireMode = self.aiming and self.aimFireMode or self.normalFireMode
-			self.fireCooldownTimer = fireMode.fireCooldown
-			sm.audio.play( "PotatoRifle - NoAmmo" )
+	for k, v in ipairs(data) do
+		if type(v) == "Character" then
+			self.portal_cooldown = 1
+			v:setWorldPosition(v_other_portal:getWorldPosition())
+			print("on enter", owner.id, v)
 		end
+	end
+
+	return true
+end
+
+function PortalGun:server_onTriggerProjectile(owner, hit_pos, hit_time, hit_velocity, proj_name, proj_owner, proj_damage, unknown, unknown2, proj_uuid)
+	print("Hit pos", hit_pos)
+	print("Hit time", hit_time)
+	print("Hit velocity", hit_velocity)
+	print("Proj name", proj_name)
+	print("Proj owner", proj_owner)
+	print("Proj damage", proj_damage)
+	print("Unknown", unknown)
+	print("Unknown2", unknown2)
+	print("Proj Uuid", proj_uuid)
+	--{<Vec3>, x = 24.3213, y = 25.404, z = 1.15688} 0.0304435 {<Vec3>, x = -70.435, y = 109.265, z = -0.636258} potato {<Player>, id = 1} 28 nil {<Vec3>, x = 0, y = 0, z = 0} {<Uuid>, 5e8eeaae-b5c1-4992-bb21-dec5254ce722}
+	return true
+end
+
+function PortalGun:client_onPortalSpawn(data)
+	local hit_pos    = data[1] --[[@as Vec3]]
+	local hit_normal = data[2] --[[@as Vec3]]
+
+	local hit_quat = sm.vec3.getRotation(hit_normal, sm.vec3.new(0, 0, -1))
+	sm.particle.createParticle("portal_particle", hit_pos + hit_normal * 0.08, hit_quat)
+end
+
+function PortalGun:server_createPortal(data)
+	local hit_pos = data[1]
+	local hit_normal = data[2]
+	local portal_idx = data[3]
+
+	local hit_quat = sm.vec3.getRotation(hit_normal, sm.vec3.new(0, 0, 1))
+	local area_trigger = sm.areaTrigger.createBox(sm.vec3.new(0.8, 0.8, 0.1), hit_pos, hit_quat)
+	area_trigger:bindOnEnter("server_onTriggerEnter")
+	--area_trigger:bindOnExit("server_onTriggerExit")
+	area_trigger:bindOnProjectile("server_onTriggerProjectile")
+
+	local v_old_portal = self.portals[portal_idx] --[[@as AreaTrigger]]
+	if v_old_portal and sm.exists(v_old_portal) then
+		self.portal_connection[v_old_portal.id] = nil
+		sm.areaTrigger.destroy(v_old_portal)
+	end
+
+	self.portals[portal_idx] = area_trigger
+	self.portal_connection[area_trigger.id] = (portal_idx % 2) + 1
+
+	self.network:sendToClients("client_onPortalSpawn", data)
+end
+
+function PortalGun:cl_placePortalClient(portal_index)
+	local owner = self.tool:getOwner()
+	if owner == nil or owner.character == nil then return end
+
+	local hit, result = sm.localPlayer.getRaycast(10)
+	if hit then
+		self.network:sendToServer("server_createPortal", { result.pointWorld, result.normalWorld, portal_index })
+	end
+end
+
+function PortalGun.cl_onPrimaryUse( self, state )
+	if state == sm.tool.interactState.start then
+		self:cl_placePortalClient(1)
 	end
 end
 
 function PortalGun.cl_onSecondaryUse( self, state )
-	if state == sm.tool.interactState.start and not self.aiming then
-		self.aiming = true
-		self.tpAnimations.animations.idle.time = 0
-
-		self:onAim( self.aiming )
-		self.tool:setMovementSlowDown( self.aiming )
-		self.network:sendToServer( "sv_n_onAim", self.aiming )
-	end
-
-	if self.aiming and (state == sm.tool.interactState.stop or state == sm.tool.interactState.null) then
-		self.aiming = false
-		self.tpAnimations.animations.idle.time = 0
-
-		self:onAim( self.aiming )
-		self.tool:setMovementSlowDown( self.aiming )
-		self.network:sendToServer( "sv_n_onAim", self.aiming )
+	if state == sm.tool.interactState.start then
+		self:cl_placePortalClient(2)
 	end
 end
 
