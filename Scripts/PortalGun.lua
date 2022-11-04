@@ -520,6 +520,14 @@ function PortalGun.onShoot( self, dir )
 
 end
 
+--[[function PortalGun:test_shit(data)
+	local vel_test = sm.noise.gunSpread(data[5], 50) * data[3]:length()
+
+	local pi_5 = math.pi * 5
+	local angular_velocity = sm.vec3.new(math.random(0, pi_5), math.random(0, pi_5), math.random(0, pi_5))
+	sm.debris.createDebris(data[1], data[4], data[6], vel_test, angular_velocity, data[7])
+end]]
+
 ---@param owner AreaTrigger
 function PortalGun:server_onTriggerEnter(owner, data)
 	local v_other_portal = self.portals[owner:getUserData().idx]
@@ -536,6 +544,23 @@ function PortalGun:server_onTriggerEnter(owner, data)
 
 			sm.physics.applyImpulse(v, v.velocity * -v.mass, true)
 			sm.physics.applyImpulse(v, v_other_portal_normal * v.velocity:length() * v.mass, true)
+		--[[else
+			if v:isDynamic() then
+				for _, shape in ipairs(v:getShapes()) do
+					self.network:sendToClients("test_shit", { shape.uuid, shape.mass, shape.velocity, v_other_portal:getWorldPosition(), v_other_portal_normal, shape.worldRotation, shape.color })
+					shape:destroyShape()
+					if sm.item.isBlock(shape.uuid) then
+						print(shape:getBoundingBox())
+						local new_block = sm.shape.createBlock(shape.uuid, shape:getBoundingBox() * 4, v_other_portal:getWorldPosition(), shape.worldRotation, true, true)
+						sm.physics.applyImpulse(new_block, v_other_portal_normal * shape.velocity:length() * shape.mass, true)
+						shape:destroyShape()
+					else
+						local new_shape = sm.shape.createPart(shape.uuid, v_other_portal:getWorldPosition(), shape.worldRotation, true, true)
+						sm.physics.applyImpulse(new_shape, v_other_portal_normal * shape.velocity:length() * shape.mass, true)
+						shape:destroyShape()
+					end
+				end
+			end]]
 		end
 	end
 
@@ -546,12 +571,15 @@ end
 function PortalGun:server_onTriggerProjectile(owner, hit_pos, hit_time, hit_velocity, proj_name, proj_owner, proj_damage, unknown, unknown2, proj_uuid)
 	local v_other_portal = self.portals[owner:getUserData().idx]
 
+	local v_other_portal_normal = get_portal_normal(v_other_portal)
 	local v_proj_pos = v_other_portal:getWorldPosition()
-	local v_proj_dir = v_other_portal:getWorldRotation() * hit_velocity --[[@as Vec3]]
+	local v_proj_dir = (v_other_portal:getWorldRotation() * owner:getWorldRotation()) * hit_velocity
+	print(hit_pos, v_proj_pos + v_other_portal_normal * 0.5, owner.id, sm.game.getCurrentTick())
 
 	if type(proj_owner) == "Shape" then
 	else
-		sm.projectile.projectileAttack(proj_uuid, proj_damage, v_proj_pos, v_proj_dir, proj_owner)
+		sm.projectile.projectileAttack(proj_uuid, proj_damage, v_proj_pos + v_other_portal_normal * 0.5, v_proj_dir, proj_owner)
+		--sm.projectile.customProjectileAttack({ portal = true }, proj_uuid, proj_damage, v_proj_pos + v_other_portal_normal * 1.5, v_proj_dir, proj_owner)
 	end
 
 	return true
@@ -584,7 +612,7 @@ function PortalGun:server_createPortal(data)
 	local portal_idx = data[3]
 
 	local hit_quat = sm.vec3.getRotation(hit_normal, sm.vec3.new(0, 0, 1))
-	local area_trigger = sm.areaTrigger.createBox(sm.vec3.new(0.8, 0.8, 0.1), hit_pos, hit_quat, sm.areaTrigger.filter.all, { idx = (portal_idx % 2) + 1 })
+	local area_trigger = sm.areaTrigger.createBox(sm.vec3.new(0.8, 0.8, 0.05), hit_pos, hit_quat, sm.areaTrigger.filter.all, { idx = (portal_idx % 2) + 1 })
 	area_trigger:bindOnEnter("server_onTriggerEnter")
 	area_trigger:bindOnProjectile("server_onTriggerProjectile")
 
@@ -606,6 +634,11 @@ function PortalGun:cl_placePortalClient(portal_index)
 	if hit then
 		self.network:sendToServer("server_createPortal", { result.pointWorld, result.normalWorld, portal_index })
 	end
+end
+
+function PortalGun:client_onReload()
+	print("test")
+	return true
 end
 
 function PortalGun.cl_onPrimaryUse( self, state )
