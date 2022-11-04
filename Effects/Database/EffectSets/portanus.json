@@ -1,0 +1,34 @@
+{
+	"Portanus": {
+		"parameterList": {
+			"color": "35ffff",
+			"range": 5.0,
+			"coneFade": 0.5,
+			"coneAngle": 85.0,
+			"intensity": 1.5,
+			"maxIntensity": 1.5,
+			"ambient": true,
+			"additive": false,
+			"ambientPosScale": 0.25,
+			"ambientIntensityScale": 0.2,
+			"ambientMaxIntensity": 0.0,
+			"ambientRangeScale": 1.0,
+			"falloffMode": 0,
+			"falloffFactor": 1.0,
+			"shadowMode": 2
+		},
+		"effectList": [
+			{
+				"type": "particle",
+				"name": "portal_particle",
+				"direction": { "x": 1.0, "y": 0.0, "z": 0.0 }
+			},
+			{
+				"type": "spotLight",
+				"name": "",
+				"direction": { "x": 1.0, "y": 0.0, "z": 0.0 },
+				"delay": 0.0
+			}
+		]
+	}
+}

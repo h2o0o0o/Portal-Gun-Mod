@@ -14,6 +14,7 @@ dofile( "$SURVIVAL_DATA/Scripts/game/survival_projectiles.lua" )
 ---@field blendTime integer
 ---@field aimBlendSpeed integer
 ---@field portals AreaTrigger[]
+---@field portal_effects Effect[]
 PortalGun = class()
 
 local renderables = {
@@ -31,16 +32,38 @@ sm.tool.preloadRenderables( renderables )
 sm.tool.preloadRenderables( renderablesTp )
 sm.tool.preloadRenderables( renderablesFp )
 
-function PortalGun.client_onCreate( self )
+function PortalGun:client_onCreate()
 	self.shootEffect = sm.effect.createEffect( "SpudgunBasic - BasicMuzzel" )
 	self.shootEffectFP = sm.effect.createEffect( "SpudgunBasic - FPBasicMuzzel" )
+
+	self.portal_effects = {}
+	self.portal_timer = 0
+end
+
+function PortalGun:client_onDestroy()
+	for k, v in pairs(self.portal_effects) do
+		if v and sm.exists(v) then
+			if v:isPlaying() then
+				v:stopImmediate()
+			end
+
+			v:destroy()
+		end
+	end
 end
 
 function PortalGun:server_onCreate()
 	self.portals = {}
-	self.portal_connection = {}
+	self.cooldown_data = {}
 end
 
+function PortalGun:server_onDestroy()
+	for k, v in pairs(self.portals) do
+		if v and sm.exists(v) then
+			sm.areaTrigger.destroy(v)
+		end
+	end
+end
 
 function PortalGun.client_onRefresh( self )
 	self:loadAnimations()
@@ -156,7 +179,24 @@ function PortalGun.loadAnimations( self )
 
 end
 
+local _sm_vec3_z = sm.vec3.new(0, 0, 1)
+local function get_portal_normal(portal)
+	return sm.vec3.getRotation(portal:getWorldRotation() * _sm_vec3_z --[[@as Vec3]], _sm_vec3_z) * _sm_vec3_z
+end
+
+local portal_color1 = sm.color.new(0x32a865ff)
+local portal_color2 = sm.color.new(0x21c29cff)
+local portal_color_vec1 = sm.vec3.new(portal_color1.r, portal_color1.g, portal_color1.b)
+local portal_color_vec2 = sm.vec3.new(portal_color2.r, portal_color2.g, portal_color2.b)
 function PortalGun.client_onUpdate( self, dt )
+	self.portal_timer = self.portal_timer + dt * 3
+	for k, v in pairs(self.portal_effects) do
+		local light_intensity = math.abs(sm.noise.perlinNoise2d(self.portal_timer, 1, 1337 + k))
+		v:setParameter("intensity", (light_intensity * 0.3) + 1)
+
+		local color_lerp = sm.vec3.lerp(portal_color_vec1, portal_color_vec2, light_intensity)
+		v:setParameter("color", sm.color.new(color_lerp.x, color_lerp.y, color_lerp.z))
+	end
 
 	-- First person animation
 	local isSprinting =  self.tool:isSprinting()
@@ -375,6 +415,15 @@ function PortalGun.client_onUpdate( self, dt )
 	self.tool:updateFpCamera( 30.0, sm.vec3.new( 0.0, 0.0, 0.0 ), self.aimWeight, bobbing )
 end
 
+function PortalGun:server_onFixedUpdate()
+	for k, v in pairs(self.cooldown_data) do
+		self.cooldown_data[k] = v - 1
+		if v <= 0 then
+			self.cooldown_data[k] = nil
+		end
+	end
+end
+
 function PortalGun.client_onEquip( self, animate )
 
 	if animate then
@@ -457,7 +506,6 @@ function PortalGun.cl_n_onShoot( self, dir )
 end
 
 function PortalGun.onShoot( self, dir )
-
 	self.tpAnimations.animations.idle.time = 0
 	self.tpAnimations.animations.shoot.time = 0
 	self.tpAnimations.animations.aimShoot.time = 0
@@ -465,144 +513,69 @@ function PortalGun.onShoot( self, dir )
 	setTpAnimation( self.tpAnimations, self.aiming and "aimShoot" or "shoot", 10.0 )
 
 	if self.tool:isInFirstPersonView() then
-			self.shootEffectFP:start()
-		else
-			self.shootEffect:start()
-	end
-
-end
-
-function PortalGun.calculateFirePosition( self )
-	local crouching = self.tool:isCrouching()
-	local firstPerson = self.tool:isInFirstPersonView()
-	local dir = sm.localPlayer.getDirection()
-	local pitch = math.asin( dir.z )
-	local right = sm.localPlayer.getRight()
-
-	local fireOffset = sm.vec3.new( 0.0, 0.0, 0.0 )
-
-	if crouching then
-		fireOffset.z = 0.15
+		self.shootEffectFP:start()
 	else
-		fireOffset.z = 0.45
+		self.shootEffect:start()
 	end
 
-	if firstPerson then
-		if not self.aiming then
-			fireOffset = fireOffset + right * 0.05
-		end
-	else
-		fireOffset = fireOffset + right * 0.25
-		fireOffset = fireOffset:rotate( math.rad( pitch ), right )
-	end
-	local firePosition = GetOwnerPosition( self.tool ) + fireOffset
-	return firePosition
-end
-
-function PortalGun.calculateTpMuzzlePos( self )
-	local crouching = self.tool:isCrouching()
-	local dir = sm.localPlayer.getDirection()
-	local pitch = math.asin( dir.z )
-	local right = sm.localPlayer.getRight()
-	local up = right:cross(dir)
-
-	local fakeOffset = sm.vec3.new( 0.0, 0.0, 0.0 )
-
-	--General offset
-	fakeOffset = fakeOffset + right * 0.25
-	fakeOffset = fakeOffset + dir * 0.5
-	fakeOffset = fakeOffset + up * 0.25
-
-	--Action offset
-	local pitchFraction = pitch / ( math.pi * 0.5 )
-	if crouching then
-		fakeOffset = fakeOffset + dir * 0.2
-		fakeOffset = fakeOffset + up * 0.1
-		fakeOffset = fakeOffset - right * 0.05
-
-		if pitchFraction > 0.0 then
-			fakeOffset = fakeOffset - up * 0.2 * pitchFraction
-		else
-			fakeOffset = fakeOffset + up * 0.1 * math.abs( pitchFraction )
-		end
-	else
-		fakeOffset = fakeOffset + up * 0.1 *  math.abs( pitchFraction )
-	end
-
-	local fakePosition = fakeOffset + GetOwnerPosition( self.tool )
-	return fakePosition
-end
-
-function PortalGun.calculateFpMuzzlePos( self )
-	local fovScale = ( sm.camera.getFov() - 45 ) / 45
-
-	local up = sm.localPlayer.getUp()
-	local dir = sm.localPlayer.getDirection()
-	local right = sm.localPlayer.getRight()
-
-	local muzzlePos45 = sm.vec3.new( 0.0, 0.0, 0.0 )
-	local muzzlePos90 = sm.vec3.new( 0.0, 0.0, 0.0 )
-
-	if self.aiming then
-		muzzlePos45 = muzzlePos45 - up * 0.2
-		muzzlePos45 = muzzlePos45 + dir * 0.5
-
-		muzzlePos90 = muzzlePos90 - up * 0.5
-		muzzlePos90 = muzzlePos90 - dir * 0.6
-	else
-		muzzlePos45 = muzzlePos45 - up * 0.15
-		muzzlePos45 = muzzlePos45 + right * 0.2
-		muzzlePos45 = muzzlePos45 + dir * 1.25
-
-		muzzlePos90 = muzzlePos90 - up * 0.15
-		muzzlePos90 = muzzlePos90 + right * 0.2
-		muzzlePos90 = muzzlePos90 + dir * 0.25
-	end
-
-	return self.tool:getFpBonePos( "pejnt_barrel" ) + sm.vec3.lerp( muzzlePos45, muzzlePos90, fovScale )
 end
 
 ---@param owner AreaTrigger
 function PortalGun:server_onTriggerEnter(owner, data)
-	if self.portal_cooldown then
-		self.portal_cooldown = nil
+	local v_other_portal = self.portals[owner:getUserData().idx]
+	if not (v_other_portal and sm.exists(v_other_portal)) then
 		return
 	end
 
-	local v_other_portal = self.portals[self.portal_connection[owner.id]]
-	print(v_other_portal:getWorldPosition(), owner.id)
-
+	local v_other_portal_normal = get_portal_normal(v_other_portal)
 	for k, v in ipairs(data) do
-		if type(v) == "Character" then
-			self.portal_cooldown = 1
-			v:setWorldPosition(v_other_portal:getWorldPosition())
-			print("on enter", owner.id, v)
+		if type(v) == "Character" and self.cooldown_data[v.id] == nil then
+			self.cooldown_data[v.id] = 2
+
+			v:setWorldPosition(v_other_portal:getWorldPosition() + v_other_portal_normal * (v:getHeight() * 0.5))
+
+			sm.physics.applyImpulse(v, v.velocity * -v.mass, true)
+			sm.physics.applyImpulse(v, v_other_portal_normal * v.velocity:length() * v.mass, true)
 		end
 	end
 
 	return true
 end
 
+---@param owner AreaTrigger
 function PortalGun:server_onTriggerProjectile(owner, hit_pos, hit_time, hit_velocity, proj_name, proj_owner, proj_damage, unknown, unknown2, proj_uuid)
-	print("Hit pos", hit_pos)
-	print("Hit time", hit_time)
-	print("Hit velocity", hit_velocity)
-	print("Proj name", proj_name)
-	print("Proj owner", proj_owner)
-	print("Proj damage", proj_damage)
-	print("Unknown", unknown)
-	print("Unknown2", unknown2)
-	print("Proj Uuid", proj_uuid)
-	--{<Vec3>, x = 24.3213, y = 25.404, z = 1.15688} 0.0304435 {<Vec3>, x = -70.435, y = 109.265, z = -0.636258} potato {<Player>, id = 1} 28 nil {<Vec3>, x = 0, y = 0, z = 0} {<Uuid>, 5e8eeaae-b5c1-4992-bb21-dec5254ce722}
+	local v_other_portal = self.portals[owner:getUserData().idx]
+
+	local v_proj_pos = v_other_portal:getWorldPosition()
+	local v_proj_dir = v_other_portal:getWorldRotation() * hit_velocity --[[@as Vec3]]
+
+	if type(proj_owner) == "Shape" then
+	else
+		sm.projectile.projectileAttack(proj_uuid, proj_damage, v_proj_pos, v_proj_dir, proj_owner)
+	end
+
 	return true
 end
 
 function PortalGun:client_onPortalSpawn(data)
 	local hit_pos    = data[1] --[[@as Vec3]]
 	local hit_normal = data[2] --[[@as Vec3]]
+	local portal_idx = data[3] --[[@as integer]]
 
-	local hit_quat = sm.vec3.getRotation(hit_normal, sm.vec3.new(0, 0, -1))
-	sm.particle.createParticle("portal_particle", hit_pos + hit_normal * 0.08, hit_quat)
+	local hit_quat = sm.vec3.getRotation(sm.vec3.new(1, 0, 0), hit_normal)
+
+	local v_old_effect = self.portal_effects[portal_idx]
+	if v_old_effect and sm.exists(v_old_effect) then
+		v_old_effect:stopImmediate()
+		v_old_effect:destroy()
+	end
+
+	local v_new_effect = sm.effect.createEffect("Portanus")
+	v_new_effect:setPosition(hit_pos + hit_normal * 0.08)
+	v_new_effect:setRotation(hit_quat)
+	v_new_effect:start()
+
+	self.portal_effects[portal_idx] = v_new_effect
 end
 
 function PortalGun:server_createPortal(data)
@@ -611,19 +584,16 @@ function PortalGun:server_createPortal(data)
 	local portal_idx = data[3]
 
 	local hit_quat = sm.vec3.getRotation(hit_normal, sm.vec3.new(0, 0, 1))
-	local area_trigger = sm.areaTrigger.createBox(sm.vec3.new(0.8, 0.8, 0.1), hit_pos, hit_quat)
+	local area_trigger = sm.areaTrigger.createBox(sm.vec3.new(0.8, 0.8, 0.1), hit_pos, hit_quat, sm.areaTrigger.filter.all, { idx = (portal_idx % 2) + 1 })
 	area_trigger:bindOnEnter("server_onTriggerEnter")
-	--area_trigger:bindOnExit("server_onTriggerExit")
 	area_trigger:bindOnProjectile("server_onTriggerProjectile")
 
 	local v_old_portal = self.portals[portal_idx] --[[@as AreaTrigger]]
 	if v_old_portal and sm.exists(v_old_portal) then
-		self.portal_connection[v_old_portal.id] = nil
 		sm.areaTrigger.destroy(v_old_portal)
 	end
 
 	self.portals[portal_idx] = area_trigger
-	self.portal_connection[area_trigger.id] = (portal_idx % 2) + 1
 
 	self.network:sendToClients("client_onPortalSpawn", data)
 end
@@ -632,7 +602,7 @@ function PortalGun:cl_placePortalClient(portal_index)
 	local owner = self.tool:getOwner()
 	if owner == nil or owner.character == nil then return end
 
-	local hit, result = sm.localPlayer.getRaycast(10)
+	local hit, result = sm.localPlayer.getRaycast(500)
 	if hit then
 		self.network:sendToServer("server_createPortal", { result.pointWorld, result.normalWorld, portal_index })
 	end
