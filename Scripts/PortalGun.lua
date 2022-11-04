@@ -5,7 +5,7 @@ dofile( "$SURVIVAL_DATA/Scripts/game/survival_projectiles.lua" )
 
 local Damage = 28
 
-PotatoRifle = class()
+PortalGun = class()
 
 local renderables = {
 	"$GAME_DATA/Character/Char_Tools/Char_spudgun/Base/char_spudgun_base_basic.rend",
@@ -22,18 +22,18 @@ sm.tool.preloadRenderables( renderables )
 sm.tool.preloadRenderables( renderablesTp )
 sm.tool.preloadRenderables( renderablesFp )
 
-function PotatoRifle.client_onCreate( self )
+function PortalGun.client_onCreate( self )
 	self.shootEffect = sm.effect.createEffect( "SpudgunBasic - BasicMuzzel" )
 	self.shootEffectFP = sm.effect.createEffect( "SpudgunBasic - FPBasicMuzzel" )
 end
 
 
 
-function PotatoRifle.client_onRefresh( self )
+function PortalGun.client_onRefresh( self )
 	self:loadAnimations()
 end
 
-function PotatoRifle.loadAnimations( self )
+function PortalGun.loadAnimations( self )
 
 	self.tpAnimations = createTpAnimations(
 		self.tool,
@@ -143,7 +143,7 @@ function PotatoRifle.loadAnimations( self )
 
 end
 
-function PotatoRifle.client_onUpdate( self, dt )
+function PortalGun.client_onUpdate( self, dt )
 
 	-- First person animation
 	local isSprinting =  self.tool:isSprinting()
@@ -362,7 +362,7 @@ function PotatoRifle.client_onUpdate( self, dt )
 	self.tool:updateFpCamera( 30.0, sm.vec3.new( 0.0, 0.0, 0.0 ), self.aimWeight, bobbing )
 end
 
-function PotatoRifle.client_onEquip( self, animate )
+function PortalGun.client_onEquip( self, animate )
 
 	if animate then
 		sm.audio.play( "PotatoRifle - Equip", self.tool:getPosition() )
@@ -394,7 +394,7 @@ function PotatoRifle.client_onEquip( self, animate )
 	end
 end
 
-function PotatoRifle.client_onUnequip( self, animate )
+function PortalGun.client_onUnequip( self, animate )
 
 	self.wantEquipped = false
 	self.equipped = false
@@ -416,34 +416,34 @@ function PotatoRifle.client_onUnequip( self, animate )
 	end
 end
 
-function PotatoRifle.sv_n_onAim( self, aiming )
+function PortalGun.sv_n_onAim( self, aiming )
 	self.network:sendToClients( "cl_n_onAim", aiming )
 end
 
-function PotatoRifle.cl_n_onAim( self, aiming )
+function PortalGun.cl_n_onAim( self, aiming )
 	if not self.tool:isLocal() and self.tool:isEquipped() then
 		self:onAim( aiming )
 	end
 end
 
-function PotatoRifle.onAim( self, aiming )
+function PortalGun.onAim( self, aiming )
 	self.aiming = aiming
 	if self.tpAnimations.currentAnimation == "idle" or self.tpAnimations.currentAnimation == "aim" or self.tpAnimations.currentAnimation == "relax" and self.aiming then
 		setTpAnimation( self.tpAnimations, self.aiming and "aim" or "idle", 5.0 )
 	end
 end
 
-function PotatoRifle.sv_n_onShoot( self, dir )
+function PortalGun.sv_n_onShoot( self, dir )
 	self.network:sendToClients( "cl_n_onShoot", dir )
 end
 
-function PotatoRifle.cl_n_onShoot( self, dir )
+function PortalGun.cl_n_onShoot( self, dir )
 	if not self.tool:isLocal() and self.tool:isEquipped() then
 		self:onShoot( dir )
 	end
 end
 
-function PotatoRifle.onShoot( self, dir )
+function PortalGun.onShoot( self, dir )
 
 	self.tpAnimations.animations.idle.time = 0
 	self.tpAnimations.animations.shoot.time = 0
@@ -459,7 +459,7 @@ function PotatoRifle.onShoot( self, dir )
 
 end
 
-function PotatoRifle.calculateFirePosition( self )
+function PortalGun.calculateFirePosition( self )
 	local crouching = self.tool:isCrouching()
 	local firstPerson = self.tool:isInFirstPersonView()
 	local dir = sm.localPlayer.getDirection()
@@ -486,7 +486,7 @@ function PotatoRifle.calculateFirePosition( self )
 	return firePosition
 end
 
-function PotatoRifle.calculateTpMuzzlePos( self )
+function PortalGun.calculateTpMuzzlePos( self )
 	local crouching = self.tool:isCrouching()
 	local dir = sm.localPlayer.getDirection()
 	local pitch = math.asin( dir.z )
@@ -520,7 +520,7 @@ function PotatoRifle.calculateTpMuzzlePos( self )
 	return fakePosition
 end
 
-function PotatoRifle.calculateFpMuzzlePos( self )
+function PortalGun.calculateFpMuzzlePos( self )
 	local fovScale = ( sm.camera.getFov() - 45 ) / 45
 
 	local up = sm.localPlayer.getUp()
@@ -549,7 +549,7 @@ function PotatoRifle.calculateFpMuzzlePos( self )
 	return self.tool:getFpBonePos( "pejnt_barrel" ) + sm.vec3.lerp( muzzlePos45, muzzlePos90, fovScale )
 end
 
-function PotatoRifle.cl_onPrimaryUse( self, state )
+function PortalGun.cl_onPrimaryUse( self, state )
 	if self.tool:getOwner().character == nil then
 		return
 	end
@@ -621,7 +621,7 @@ function PotatoRifle.cl_onPrimaryUse( self, state )
 	end
 end
 
-function PotatoRifle.cl_onSecondaryUse( self, state )
+function PortalGun.cl_onSecondaryUse( self, state )
 	if state == sm.tool.interactState.start and not self.aiming then
 		self.aiming = true
 		self.tpAnimations.animations.idle.time = 0
@@ -641,7 +641,7 @@ function PotatoRifle.cl_onSecondaryUse( self, state )
 	end
 end
 
-function PotatoRifle.client_onEquippedUpdate( self, primaryState, secondaryState )
+function PortalGun.client_onEquippedUpdate( self, primaryState, secondaryState )
 	if primaryState ~= self.prevPrimaryState then
 		self:cl_onPrimaryUse( primaryState )
 		self.prevPrimaryState = primaryState
