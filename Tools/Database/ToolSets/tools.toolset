@@ -1,12 +1,14 @@
 {
 	"toolList": [
 		{
+			"name": "portanus",
 			"uuid": "7f772062-8637-436c-9146-de0d8e11683f",
 			"previewRenderable": "$GAME_DATA/Character/Char_Tools/char_spudgun_preview.rend",
 			"previewRotation": [ 1, 0, 0, 0, 0, -1, 0, 1, 0 ],
 			"script": {
-				"file": "$CONTENT_DATA/Scripts/Tools/PortalGun.lua",
-				"class": "PortalGun"
+				"file": "$CONTENT_DATA/Scripts/PortalGun.lua",
+				"class": "PortalGun",
+				"data": {}
 			}
 		}
 	]
