@@ -50,21 +50,22 @@ function PortalGun:client_onCreate()
 
 	self.portal_timer = 0
 
-	self.debugEffects = {}
 	self.client_portals = {}
 	self.client_enter_timers = {}
-
-	for i = 1, 2 do
-		local eff = sm.effect.createEffect("ShapeRenderable")
-		eff:setParameter("uuid", sm.uuid.new("628b2d61-5ceb-43e9-8334-a4135566df7a"))
-		eff:setParameter("color", sm.color.new(0x00ff00ff))
-
-		self.debugEffects[i] = eff
-	end
 end
 
 function PortalGun:client_onDestroy()
 	self:client_removePortals()
+
+	for k, v in pairs(self.portal_effects) do
+		if v and sm.exists(v) then
+			if v:isPlaying() then
+				v:stopImmediate()
+			end
+
+			v:destroy()
+		end
+	end
 end
 
 function PortalGun:server_onCreate()
@@ -626,11 +627,10 @@ end
 function PortalGun:client_onTriggerEnter(owner, data)
 	local v_other_idx = owner:getUserData().idx
 	local v_other_portal_data = self.client_portals[v_other_idx]
-	if not v_other_portal_data then return print("test3") end
+	if not v_other_portal_data then return end
 
 	local v_other_portal = v_other_portal_data.portal
 	if not sm.exists(v_other_portal) then
-		print("test2")
 		return
 	end
 
@@ -668,7 +668,6 @@ function PortalGun:client_onTriggerEnter(owner, data)
 			end
 		elseif v_type_data == "Character" then
 			self.client_enter_timers[v_other_idx] = 1.0
-			print("test")
 		end
 	end
 end
@@ -764,8 +763,7 @@ function PortalGun:client_onPortalSpawn(data)
 	--p_characterobject_package_farmbot_bot
 	--p_characterobject_package_glowworm_bot
 	--p_characterobject_package_haybot_bot
-	sm.particle.createParticle("p_characterobject_package_haybot_bot", hit_pos)
-	print("test")
+	--sm.particle.createParticle("p_characterobject_package_haybot_bot", hit_pos)
 
 	local area_trigger = nil
 	if portal_owner then
@@ -774,7 +772,7 @@ function PortalGun:client_onPortalSpawn(data)
 		area_trigger = sm.areaTrigger.createBox(sm.vec3.new(0.8, 0.8, 0.05), pos_calc, quat_calc, sm.areaTrigger.filter.all, { idx = (portal_idx % 2) + 1 })
 	else
 		local hit_quat = sm.vec3.getRotation(sm.vec3.new(0, 0, 1), hit_normal)
-		area_trigger = sm.areaTrigger.createBox(sm.vec3.new(0.8, 0.8, 0.05), hit_pos + hit_normal * 0.1, hit_quat, sm.areaTrigger.filter.all, { idx = (portal_idx % 2) + 1 })
+		area_trigger = sm.areaTrigger.createBox(sm.vec3.new(0.8, 0.8, 0.05), hit_pos + hit_normal * 0.1 --[[@as Vec3]], hit_quat, sm.areaTrigger.filter.all, { idx = (portal_idx % 2) + 1 })
 	end
 
 	area_trigger:bindOnEnter("client_onTriggerEnter")
@@ -809,7 +807,7 @@ function PortalGun:server_createPortal(data)
 		area_trigger = sm.areaTrigger.createBox(sm.vec3.new(0.8, 0.8, 0.05), pos_calc, quat_calc, sm.areaTrigger.filter.all, { idx = (portal_idx % 2) + 1 })
 	else
 		local hit_quat = sm.vec3.getRotation(sm.vec3.new(0, 0, 1), hit_normal)
-		area_trigger = sm.areaTrigger.createBox(sm.vec3.new(0.8, 0.8, 0.05), hit_pos + hit_normal * 0.1, hit_quat, sm.areaTrigger.filter.all, { idx = (portal_idx % 2) + 1 })
+		area_trigger = sm.areaTrigger.createBox(sm.vec3.new(0.8, 0.8, 0.05), hit_pos + hit_normal * 0.1 --[[@as Vec3]], hit_quat, sm.areaTrigger.filter.all, { idx = (portal_idx % 2) + 1 })
 	end
 
 	area_trigger:bindOnEnter("server_onTriggerEnter")
@@ -863,11 +861,15 @@ function PortalGun:client_removePortals()
 			if v:isPlaying() then
 				v:stopImmediate()
 			end
+		end
+	end
 
-			v:destroy()
+	for k, v in pairs(self.client_portals) do
+		if v and sm.exists(v.portal) then
+			sm.areaTrigger.destroy(v.portal)
 		end
 
-		self.portal_effects[k] = nil
+		self.client_portals[k] = nil
 	end
 end
 
