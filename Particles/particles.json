@@ -1,5 +1,7 @@
 {
 	"particleSystemList": [
-		"portal_particle.json"
+		"portal_particle.json",
+		"portal_poof.json",
+		"portal_idle.json"
 	]
 }

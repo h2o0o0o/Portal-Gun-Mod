@@ -21,7 +21,12 @@
 			{
 				"type": "particle",
 				"name": "portal_particle",
-				"direction": { "x": 0.0, "y": 0.0, "z": -1.0 }
+				"direction": { "x": 0.0, "y": 0.0, "z": 1.0 }
+			},
+			{
+				"type": "particle",
+				"name": "portal_idle",
+				"direction": { "x": 0.0, "y": 0.0, "z": 1.0 }
 			},
 			{
 				"type": "spotLight",
