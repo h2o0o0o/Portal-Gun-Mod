@@ -21,12 +21,12 @@
 			{
 				"type": "particle",
 				"name": "portal_particle",
-				"direction": { "x": 1.0, "y": 0.0, "z": 0.0 }
+				"direction": { "x": 0.0, "y": 0.0, "z": -1.0 }
 			},
 			{
 				"type": "spotLight",
 				"name": "",
-				"direction": { "x": 1.0, "y": 0.0, "z": 0.0 },
+				"direction": { "x": 0.0, "y": 0.0, "z": 1.0 },
 				"delay": 0.0
 			}
 		]
