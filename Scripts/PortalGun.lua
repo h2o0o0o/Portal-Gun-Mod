@@ -668,6 +668,8 @@ function PortalGun:client_onTriggerStay(owner, data)
 			end
 		elseif v_type_data == "Character" then
 			self.client_enter_timers[v_other_idx] = 1.0
+			sm.particle.createParticle("portal_teleport_bullet", v_other_portal_pos, sm.vec3.getRotation(sm.vec3.new(0, 0, 1), v_other_portal_norm))
+			--portal_teleport_bullet
 		end
 	end
 end
@@ -773,19 +775,19 @@ function PortalGun:client_onPortalSpawn(data)
 		return
 	end
 
-	--p_characterobject_package_farmbot_bot
-	--p_characterobject_package_glowworm_bot
-	--p_characterobject_package_haybot_bot
-	--sm.particle.createParticle("p_characterobject_package_haybot_bot", hit_pos)
-
 	local area_trigger = nil
 	if portal_owner then
 		local pos_calc = portal_owner.worldPosition + portal_owner.worldRotation * hit_pos --[[@as Vec3]]
 		local quat_calc = portal_owner.worldRotation * sm.vec3.getRotation(hit_normal, sm.vec3.new(0, 0, -1)) --[[@as Quat]]
 		area_trigger = sm.areaTrigger.createBox(sm.vec3.new(0.8, 0.8, 0.05), pos_calc, quat_calc, sm.areaTrigger.filter.all, { idx = (portal_idx % 2) + 1 })
+
+		local quat_calc2 = portal_owner.worldRotation * sm.vec3.getRotation(sm.vec3.new(0, 0, 1), hit_normal) --[[@as Quat]]
+		sm.particle.createParticle("portal_poof", pos_calc, quat_calc2)
 	else
 		local hit_quat = sm.vec3.getRotation(sm.vec3.new(0, 0, 1), hit_normal)
 		area_trigger = sm.areaTrigger.createBox(sm.vec3.new(0.8, 0.8, 0.05), hit_pos + hit_normal * 0.1 --[[@as Vec3]], hit_quat, sm.areaTrigger.filter.all, { idx = (portal_idx % 2) + 1 })
+
+		sm.particle.createParticle("portal_poof", hit_pos, hit_quat)
 	end
 
 	area_trigger:bindOnStay("client_onTriggerStay")

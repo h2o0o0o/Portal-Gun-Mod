@@ -14,11 +14,18 @@
             },
             "Bulbs" : {
                "material" : "DifAsg",
-               "textureList" : []
+               "textureList" : [
+                  "$CONTENT_DATA/Tools/Textures/liquid_color_dif.png",
+                  "$CONTENT_DATA/Tools/Textures/buld_light_asg.png"
+               ]
             },
             "Flask" : {
                "material" : "Liquid",
-               "textureList" : [ "", "", "$GAME_DATA/Textures/Default/default_nor.tga" ]
+               "textureList" : [
+                  "",
+                  "$CONTENT_DATA/Tools/Textures/liquid_color_dif.png",
+                  "$GAME_DATA/Textures/Default/default_nor.tga"
+               ]
             }
          }
       }

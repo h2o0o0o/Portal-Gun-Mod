@@ -1,6 +1,7 @@
 {
 	"particleSystemList": [
 		"portal_particle.json",
+		"portal_teleport_bullet.json",
 		"portal_poof.json",
 		"portal_idle.json"
 	]
