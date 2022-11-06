@@ -22,6 +22,7 @@ dofile( "$SURVIVAL_DATA/Scripts/game/survival_projectiles.lua" )
 ---@field portals PortalData[]
 ---@field portal_effects Effect[]
 ---@field client_portals PortalData[]
+---@field cl_cached_shapes boolean[]
 PortalGun = class()
 
 local renderables = {
@@ -52,6 +53,7 @@ function PortalGun:client_onCreate()
 
 	self.client_portals = {}
 	self.client_enter_timers = {}
+	self.cl_cached_shapes = {}
 end
 
 function PortalGun:client_onDestroy()
@@ -605,12 +607,19 @@ function PortalGun.onShoot( self, dir )
 end
 
 ---@param shape Shape
-local function spawn_debri_from_shape(shape, portal_normal, portal_pos)
-	local m_pi_5 = math.pi * 5
-	local v_debri_vel = portal_normal * math.abs(shape.velocity:length()) --[[@as Vec3]]
+local function spawn_debri_from_shape(self, shape, portal_normal, portal_pos)
+	if self.cl_cached_shapes[shape.id] ~= nil then
+		return
+	end
+
+	local m_pi_5 = math.pi * 10
+	local v_debri_speed = math.max(math.abs(shape.velocity:length()), 5)
+	local v_debri_vel = sm.noise.gunSpread(portal_normal, 80) * v_debri_speed --[[@as Vec3]]
 	local v_angular_vel = sm.vec3.new(math.random(0, m_pi_5), math.random(0, m_pi_5), math.random(0, m_pi_5))
 
-	sm.debris.createDebris(shape.uuid, portal_pos, shape.worldRotation, v_debri_vel, v_angular_vel, shape.color)
+	sm.debris.createDebris(shape.uuid, portal_pos, shape.worldRotation, v_debri_vel, v_angular_vel, shape.color, math.random(4, 10))
+
+	self.cl_cached_shapes[shape.id] = true
 end
 
 ---@param body Body
@@ -624,7 +633,7 @@ local function create_safe_body_list(body)
 	return v_output
 end
 
-function PortalGun:client_onTriggerEnter(owner, data)
+function PortalGun:client_onTriggerStay(owner, data)
 	local v_other_idx = owner:getUserData().idx
 	local v_other_portal_data = self.client_portals[v_other_idx]
 	if not v_other_portal_data then return end
@@ -650,10 +659,9 @@ function PortalGun:client_onTriggerEnter(owner, data)
 				for i, shape_data in ipairs(owner:getShapes()) do
 					local v_cur_shape = shape_data.shape --[[@as Shape]]
 					if sm.exists(v_cur_shape) and v_owner_safe_list[v_cur_shape.body.id] == nil then
-						spawn_debri_from_shape(v_cur_shape, v_other_portal_norm, v_other_portal_pos)
+						spawn_debri_from_shape(self, v_cur_shape, v_other_portal_norm, v_other_portal_pos)
 
 						self.client_enter_timers[v_other_idx] = 1.0
-						--self.client_enter_timers
 					end
 				end
 			else
@@ -662,7 +670,7 @@ function PortalGun:client_onTriggerEnter(owner, data)
 				for i, shape_data in ipairs(owner:getShapes()) do
 					local v_cur_shape = shape_data.shape --[[@as Shape]]
 					if sm.exists(v_cur_shape) then
-						spawn_debri_from_shape(v_cur_shape, v_other_portal_norm, v_other_portal_pos)
+						spawn_debri_from_shape(self, v_cur_shape, v_other_portal_norm, v_other_portal_pos)
 					end
 				end
 			end
@@ -673,7 +681,7 @@ function PortalGun:client_onTriggerEnter(owner, data)
 end
 
 ---@param owner AreaTrigger
-function PortalGun:server_onTriggerEnter(owner, data)
+function PortalGun:server_onTriggerStay(owner, data)
 	local v_other_idx = owner:getUserData().idx
 	local v_other_portal_data = self.portals[v_other_idx]
 	if not v_other_portal_data then return end
@@ -701,16 +709,20 @@ function PortalGun:server_onTriggerEnter(owner, data)
 		elseif v_type_str == "Body" then
 			if v_self_owner then
 				local v_owner_creation_id = v_self_owner.body:getCreationId()
-				for k, v in ipairs(owner:getShapes()) do
-					local v_shape = v.shape
+				for _, v_shape_data in ipairs(owner:getShapes()) do
+					local v_shape = v_shape_data.shape --[[@as Shape]]
 					if sm.exists(v_shape) and v_shape.body:getCreationId() ~= v_owner_creation_id then
-						print(v_shape.body:getCreationId(), v_owner_creation_id)
-						v_shape:destroyShape()
+						if sm.item.isBlock(v_shape.uuid) then
+							local v_blk_pos = v_shape:getClosestBlockLocalPosition(v_shape_data.shapeWorldPosition)
+							v_shape:destroyBlock(v_blk_pos, sm.vec3.one())
+						else
+							v_shape:destroyShape()
+						end
 					end
 				end
 			else
-				for k, v in ipairs(owner:getShapes()) do
-					local v_shape = v.shape
+				for _, v_shape_data in ipairs(owner:getShapes()) do
+					local v_shape = v_shape_data.shape
 					if sm.exists(v_shape) then
 						v_shape:destroyShape()
 					end
@@ -718,8 +730,11 @@ function PortalGun:server_onTriggerEnter(owner, data)
 			end
 		end
 	end
+end
 
-	return true
+---@return Vec3
+local function vector_reflect(vec, normal)
+	return vec - normal * (2 * normal:dot(vec)) --[[@as Vec3]]
 end
 
 ---@param owner AreaTrigger
@@ -738,13 +753,19 @@ function PortalGun:server_onTriggerProjectile(owner, hit_pos, hit_time, hit_velo
 	if not sm.exists(v_other_portal) then return end
 
 	local v_other_portal_normal = get_portal_normal(v_other_portal)
-	local v_proj_pos = v_other_portal:getWorldPosition() + v_other_portal_normal * 0.15
-	local v_proj_dir = (v_other_portal:getWorldRotation() * owner:getWorldRotation()) * hit_velocity --[[@as Vec3]]
+	local v_proj_pos = v_other_portal:getWorldPosition() + v_other_portal_normal * 0.15 --[[@as Vec3]]
+	local v_proj_rot = owner:getWorldRotation() * v_other_portal:getWorldRotation()
+	local v_proj_dir = vector_reflect(v_proj_rot * -hit_velocity:normalize(), v_other_portal_normal) * hit_velocity:length()
 
 	if type(proj_owner) == "Shape" then
-		
+		if sm.exists(proj_owner) then
+			local v_global_pos = proj_owner:transformPoint(v_proj_pos)
+			local v_global_vel = proj_owner:transformDirection(v_proj_dir)
+
+			sm.projectile.shapeProjectileAttack(proj_uuid, proj_damage, v_global_pos, v_global_vel, proj_owner)
+		end
 	else
-		sm.projectile.projectileAttack(proj_uuid, proj_damage, v_proj_pos + v_other_portal_normal * 0.5 --[[@as Vec3]], v_proj_dir, proj_owner)
+		sm.projectile.projectileAttack(proj_uuid, proj_damage, v_proj_pos, v_proj_dir, proj_owner)
 	end
 
 	return true
@@ -775,7 +796,7 @@ function PortalGun:client_onPortalSpawn(data)
 		area_trigger = sm.areaTrigger.createBox(sm.vec3.new(0.8, 0.8, 0.05), hit_pos + hit_normal * 0.1 --[[@as Vec3]], hit_quat, sm.areaTrigger.filter.all, { idx = (portal_idx % 2) + 1 })
 	end
 
-	area_trigger:bindOnEnter("client_onTriggerEnter")
+	area_trigger:bindOnStay("client_onTriggerStay")
 	area_trigger:setShapeDetection(true)
 
 	local v_old_portal = self.client_portals[portal_idx]
@@ -810,8 +831,8 @@ function PortalGun:server_createPortal(data)
 		area_trigger = sm.areaTrigger.createBox(sm.vec3.new(0.8, 0.8, 0.05), hit_pos + hit_normal * 0.1 --[[@as Vec3]], hit_quat, sm.areaTrigger.filter.all, { idx = (portal_idx % 2) + 1 })
 	end
 
-	area_trigger:bindOnEnter("server_onTriggerEnter")
 	area_trigger:bindOnProjectile("server_onTriggerProjectile")
+	area_trigger:bindOnStay("server_onTriggerStay")
 	area_trigger:setShapeDetection(true)
 
 	local v_old_portal = self.portals[portal_idx]
