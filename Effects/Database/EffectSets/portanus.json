@@ -19,6 +19,14 @@
 		},
 		"effectList": [
 			{
+				"type": "audio",
+				"name": "event:/tools/lift_pickup"
+			},
+			{
+				"type": "audio",
+				"name": "event:/amb/3D/amb_3D_elevator"
+			},
+			{
 				"type": "particle",
 				"name": "portal_particle_start",
 				"direction": { "x": 0.0, "y": 0.0, "z": 1.0 },
