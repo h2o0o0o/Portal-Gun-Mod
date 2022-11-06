@@ -3,7 +3,7 @@
 		{
 			"name": "portanus",
 			"uuid": "ba3e1c6c-a8cd-4eaa-83c8-b7e95b333a22",
-			"previewRenderable": "$GAME_DATA/Character/Char_Tools/char_spudgun_preview.rend",
+			"previewRenderable": "$CONTENT_DATA/Tools/Renderables/portalgun_model.rend",
 			"previewRotation": [ 1, 0, 0, 0, 0, -1, 0, 1, 0 ],
 			"script": {
 				"file": "$CONTENT_DATA/Scripts/PortalGun.lua",

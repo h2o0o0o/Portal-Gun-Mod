@@ -1,0 +1,10 @@
+{
+	"lodList": [
+		{
+			"mesh": "$CONTENT_DATA/Tools/Mesh/potralgun_tp_offset.dae",
+			"includes" : ["POSITION", "UV0", "NORMAL", "TANGENTS", "BLEND_INDICES", "BLEND_WEIGHTS"],
+
+			"maxViewDistance": 1000.0
+		}
+	]
+}

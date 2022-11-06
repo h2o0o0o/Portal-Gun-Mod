@@ -25,16 +25,9 @@ dofile( "$SURVIVAL_DATA/Scripts/game/survival_projectiles.lua" )
 ---@field cl_cached_shapes boolean[]
 PortalGun = class()
 
-local renderables = {
-	"$GAME_DATA/Character/Char_Tools/Char_spudgun/Base/char_spudgun_base_basic.rend",
-	"$GAME_DATA/Character/Char_Tools/Char_spudgun/Barrel/Barrel_basic/char_spudgun_barrel_basic.rend",
-	"$GAME_DATA/Character/Char_Tools/Char_spudgun/Sight/Sight_basic/char_spudgun_sight_basic.rend",
-	"$GAME_DATA/Character/Char_Tools/Char_spudgun/Stock/Stock_broom/char_spudgun_stock_broom.rend",
-	"$GAME_DATA/Character/Char_Tools/Char_spudgun/Tank/Tank_basic/char_spudgun_tank_basic.rend"
-}
-
-local renderablesTp = {"$GAME_DATA/Character/Char_Male/Animations/char_male_tp_spudgun.rend", "$GAME_DATA/Character/Char_Tools/Char_spudgun/char_spudgun_tp_animlist.rend"}
-local renderablesFp = {"$GAME_DATA/Character/Char_Tools/Char_spudgun/char_spudgun_fp_animlist.rend"}
+local renderables = { "$CONTENT_DATA/Tools/Renderables/portalgun_model.rend" }
+local renderablesTp = { "$GAME_DATA/Character/Char_Male/Animations/char_male_tp_spudgun.rend", "$CONTENT_DATA/Tools/Renderables/portalgun_tp_offset.rend" }
+local renderablesFp = { "$CONTENT_DATA/Tools/Renderables/portalgun_fp_offset.rend" }
 
 sm.tool.preloadRenderables( renderables )
 sm.tool.preloadRenderables( renderablesTp )
@@ -44,12 +37,11 @@ function PortalGun:client_onCreate()
 	self.shootEffect = sm.effect.createEffect( "SpudgunBasic - BasicMuzzel" )
 	self.shootEffectFP = sm.effect.createEffect( "SpudgunBasic - FPBasicMuzzel" )
 
-	self.portal_effects = {}
-	for i = 1, 2 do
-		self.portal_effects[i] = sm.effect.createEffect("Portanus")
-	end
-
 	self.portal_timer = 0
+	self.portal_effects = {
+		sm.effect.createEffect("Portanus"),
+		sm.effect.createEffect("Portanus")
+	}
 
 	self.client_portals = {}
 	self.client_enter_timers = {}
@@ -306,7 +298,7 @@ function PortalGun:client_onUpdate( dt )
 		end
 
 		local dir = sm.localPlayer.getDirection()
-		local firePos = self.tool:getFpBonePos( "pejnt_barrel" )
+		local firePos = self.tool:getFpBonePos( "jnt_portalgun_shoot" )
 
 		if not self.aiming then
 			effectPos = firePos + dir * 0.2
@@ -321,8 +313,8 @@ function PortalGun:client_onUpdate( dt )
 		self.shootEffectFP:setVelocity( self.tool:getMovementVelocity() )
 		self.shootEffectFP:setRotation( rot )
 	end
-	local pos = self.tool:getTpBonePos( "pejnt_barrel" )
-	local dir = self.tool:getTpBoneDir( "pejnt_barrel" )
+	local pos = self.tool:getTpBonePos( "jnt_portalgun_shoot" )
+	local dir = self.tool:getTpBoneDir( "jnt_portalgun_shoot" )
 
 	effectPos = pos + dir * 0.2
 

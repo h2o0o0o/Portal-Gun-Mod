@@ -1,0 +1,26 @@
+{
+   "lodList" : [
+      {
+         "maxViewDistance" : 1000.0,
+         "mesh" : "$CONTENT_DATA/Tools/Mesh/potralgun_model.dae",
+         "subMeshMap" : {
+            "Base" : {
+               "material" : "DifAsgNor",
+               "textureList" : [
+                  "$CONTENT_DATA/Tools/Textures/portal_gun_dif.png",
+                  "$CONTENT_DATA/Tools/Textures/portal_gun_asg.png",
+                  "$CONTENT_DATA/Tools/Textures/portal_gun_nor.png"
+               ]
+            },
+            "Bulbs" : {
+               "material" : "DifAsg",
+               "textureList" : []
+            },
+            "Flask" : {
+               "material" : "Liquid",
+               "textureList" : [ "", "", "$GAME_DATA/Textures/Default/default_nor.tga" ]
+            }
+         }
+      }
+   ]
+}

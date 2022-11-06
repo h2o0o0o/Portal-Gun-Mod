@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <asset>
+    <contributor>
+      <author></author>
+      <authoring_tool>FBX COLLADA exporter</authoring_tool>
+      <comments></comments>
+    </contributor>
+    <created>2022-11-06T12:16:14Z</created>
+    <keywords></keywords>
+    <modified>2022-11-06T12:16:14Z</modified>
+    <revision></revision>
+    <subject></subject>
+    <title></title>
+    <unit meter="0.010000" name="centimeter"></unit>
+    <up_axis>Y_UP</up_axis>
+  </asset>
+  <library_visual_scenes>
+    <visual_scene id="Scene" name="Scene">
+      <node name="jnt_right_weapon" id="jnt_right_weapon" sid="jnt_right_weapon" type="JOINT">
+        <matrix sid="matrix">1.000000 0.000000 0.000000 0.000000 0.000000 -0.000000 -1.000000 0.000000 0.000000 1.000000 -0.000000 0.000000 0.000000 0.000000 0.000000 1.000000</matrix>
+        <extra>
+          <technique profile="FCOLLADA">
+            <visibility>1.000000</visibility>
+          </technique>
+        </extra>
+        <node name="jnt_portalgun_base" id="jnt_portalgun_base" sid="jnt_portalgun_base" type="JOINT">
+          <matrix sid="matrix">1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.621546 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000</matrix>
+          <extra>
+            <technique profile="FCOLLADA">
+              <visibility>1.000000</visibility>
+            </technique>
+          </extra>
+          <node name="jnt_portalgun_base_end" id="jnt_portalgun_base_end" sid="jnt_portalgun_base_end" type="JOINT">
+            <matrix sid="matrix">1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 1.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000</matrix>
+            <extra>
+              <technique profile="FCOLLADA">
+                <visibility>1.000000</visibility>
+              </technique>
+            </extra>
+          </node>
+        </node>
+      </node>
+      <extra>
+        <technique profile="MAX3D">
+          <frame_rate>25.000000</frame_rate>
+        </technique>
+        <technique profile="FCOLLADA">
+          <start_time>0.000000</start_time>
+          <end_time>1.000000</end_time>
+        </technique>
+      </extra>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#Scene"></instance_visual_scene>
+  </scene>
+</COLLADA>
