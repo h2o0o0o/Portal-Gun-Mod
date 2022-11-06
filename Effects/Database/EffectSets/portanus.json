@@ -20,8 +20,15 @@
 		"effectList": [
 			{
 				"type": "particle",
+				"name": "portal_particle_start",
+				"direction": { "x": 0.0, "y": 0.0, "z": 1.0 },
+				"duration": 1.0
+			},
+			{
+				"type": "particle",
 				"name": "portal_particle",
-				"direction": { "x": 0.0, "y": 0.0, "z": 1.0 }
+				"direction": { "x": 0.0, "y": 0.0, "z": 1.0 },
+				"delay": 1.0
 			},
 			{
 				"type": "particle",
@@ -33,6 +40,16 @@
 				"name": "",
 				"direction": { "x": 0.0, "y": 0.0, "z": 1.0 },
 				"delay": 0.0
+			}
+		]
+	},
+	"Portanus - Teleport": {
+		"effectList": [
+			{
+				"type": "audio",
+				//"name": "event:/ui/menu_change_screen"
+				//"name": "event:/tools/glowstick/gs_bounce"
+				"name": "event:/tools/vacuum/vacuum_blowout"
 			}
 		]
 	}

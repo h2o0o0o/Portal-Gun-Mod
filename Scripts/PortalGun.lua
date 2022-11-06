@@ -26,7 +26,7 @@ dofile( "$SURVIVAL_DATA/Scripts/game/survival_projectiles.lua" )
 PortalGun = class()
 
 local renderables = { "$CONTENT_DATA/Tools/Renderables/portalgun_model.rend" }
-local renderablesTp = { "$GAME_DATA/Character/Char_Male/Animations/char_male_tp_spudgun.rend", "$CONTENT_DATA/Tools/Renderables/portalgun_tp_offset.rend" }
+local renderablesTp = { "$GAME_DATA/Character/Char_Male/Animations/char_male_tp_connecttool.rend", "$CONTENT_DATA/Tools/Renderables/portalgun_tp_offset.rend" }
 local renderablesFp = { "$CONTENT_DATA/Tools/Renderables/portalgun_fp_offset.rend" }
 
 sm.tool.preloadRenderables( renderables )
@@ -81,32 +81,30 @@ function PortalGun.loadAnimations( self )
 		self.tool,
 		{
 			shoot = { "spudgun_shoot", { crouch = "spudgun_crouch_shoot" } },
-			aim = { "spudgun_aim", { crouch = "spudgun_crouch_aim" } },
-			aimShoot = { "spudgun_aim_shoot", { crouch = "spudgun_crouch_aim_shoot" } },
-			idle = { "spudgun_idle" },
-			pickup = { "spudgun_pickup", { nextAnimation = "idle" } },
-			putdown = { "spudgun_putdown" }
+			idle = { "connecttool_idle" },
+			pickup = { "connecttool_pickup", { nextAnimation = "idle" } },
+			putdown = { "connecttool_putdown" }
 		}
 	)
 	local movementAnimations = {
-		idle = "spudgun_idle",
-		idleRelaxed = "spudgun_relax",
+		idle = "connecttool_idle",
+		idleRelaxed = "connecttool_idle_relaxed",
 
-		sprint = "spudgun_sprint",
-		runFwd = "spudgun_run_fwd",
-		runBwd = "spudgun_run_bwd",
+		sprint = "connecttool_sprint",
+		runFwd = "connecttool_run_fwd",
+		runBwd = "connecttool_run_bwd",
 
-		jump = "spudgun_jump",
-		jumpUp = "spudgun_jump_up",
-		jumpDown = "spudgun_jump_down",
+		jump = "connecttool_jump",
+		jumpUp = "connecttool_jump_up",
+		jumpDown = "connecttool_jump_down",
 
-		land = "spudgun_jump_land",
-		landFwd = "spudgun_jump_land_fwd",
-		landBwd = "spudgun_jump_land_bwd",
+		land = "connecttool_jump_land",
+		landFwd = "connecttool_jump_land_fwd",
+		landBwd = "connecttool_jump_land_bwd",
 
-		crouchIdle = "spudgun_crouch_idle",
-		crouchFwd = "spudgun_crouch_fwd",
-		crouchBwd = "spudgun_crouch_bwd"
+		crouchIdle = "connecttool_crouch_idle",
+		crouchFwd = "connecttool_crouch_fwd",
+		crouchBwd = "connecttool_crouch_bwd"
 	}
 
 	for name, animation in pairs( movementAnimations ) do
@@ -119,20 +117,14 @@ function PortalGun.loadAnimations( self )
 		self.fpAnimations = createFpAnimations(
 			self.tool,
 			{
-				equip = { "spudgun_pickup", { nextAnimation = "idle" } },
-				unequip = { "spudgun_putdown" },
+				equip = { "connecttool_pickup", { nextAnimation = "idle" } },
+				unequip = { "connecttool_putdown" },
 
-				idle = { "spudgun_idle", { looping = true } },
-				shoot = { "spudgun_shoot", { nextAnimation = "idle" } },
+				idle = { "connecttool_idle", { looping = true } },
 
-				aimInto = { "spudgun_aim_into", { nextAnimation = "aimIdle" } },
-				aimExit = { "spudgun_aim_exit", { nextAnimation = "idle", blendNext = 0 } },
-				aimIdle = { "spudgun_aim_idle", { looping = true} },
-				aimShoot = { "spudgun_aim_shoot", { nextAnimation = "aimIdle"} },
-
-				sprintInto = { "spudgun_sprint_into", { nextAnimation = "sprintIdle",  blendNext = 0.2 } },
-				sprintExit = { "spudgun_sprint_exit", { nextAnimation = "idle",  blendNext = 0 } },
-				sprintIdle = { "spudgun_sprint_idle", { looping = true } },
+				sprintInto = { "connecttool_sprint_into", { nextAnimation = "sprintIdle",  blendNext = 0.2 } },
+				sprintExit = { "connecttool_sprint_exit", { nextAnimation = "idle",  blendNext = 0 } },
+				sprintIdle = { "connecttool_sprint_idle", { looping = true } },
 			}
 		)
 	end
@@ -186,8 +178,33 @@ function PortalGun.loadAnimations( self )
 end
 
 local _sm_vec3_z = sm.vec3.new(0, 0, 1)
+---@return Vec3
 local function get_portal_normal(portal)
-	return portal:getWorldRotation() * _sm_vec3_z
+	return portal:getWorldRotation() * _sm_vec3_z --[[@as Vec3]]
+end
+
+local function draw_line(start_vec, end_vec, steps)
+	for i = 1, steps do
+		sm.particle.createParticle("construct_welding", sm.vec3.lerp(start_vec, end_vec, i / steps))
+	end
+end
+
+---@return Vec3
+local function vector_reflect(vec, normal)
+	return vec - normal * (2 * normal:dot(vec)) --[[@as Vec3]]
+end
+
+local function find_vector_angles(vec)
+	local output = {}
+	output.pitch = math.asin(vec.z)
+	output.yaw = math.atan2(vec.y, vec.x)
+
+	return output
+end
+
+local function find_right_vector(vector)
+    local yaw = math.atan2(vector.y, vector.x) - math.pi / 2
+    return sm.vec3.new(math.cos(yaw), math.sin(yaw), 0)
 end
 
 local portal_color1 = sm.color.new(0x32a865ff)
@@ -195,6 +212,33 @@ local portal_color2 = sm.color.new(0x21c29cff)
 local portal_color_vec1 = sm.vec3.new(portal_color1.r, portal_color1.g, portal_color1.b)
 local portal_color_vec2 = sm.vec3.new(portal_color2.r, portal_color2.g, portal_color2.b)
 function PortalGun:client_onUpdate( dt )
+	--[[local hit, result = sm.physics.raycast(sm.camera.getPosition(), sm.camera.getPosition() + sm.camera.getDirection() * 10, nil, sm.physics.filter.areaTrigger)
+	if hit and result.type == "areaTrigger" then
+		local v_direction = (sm.camera.getPosition() - result.pointWorld):normalize()
+
+		local v_current_portal = result:getAreaTrigger()
+		local v_other_portal_data = self.portals[v_current_portal:getUserData().idx]
+		local v_other_portal = v_other_portal_data.portal
+		local v_other_portal_pos = v_other_portal:getWorldPosition()
+		local v_current_portal_pos = v_current_portal:getWorldPosition()
+
+		local v_other_portal_normal = get_portal_normal(v_other_portal)
+		local v_current_portal_normal = get_portal_normal(v_current_portal)
+
+		local v_reflected_dir = vector_reflect(v_direction, v_other_portal_normal)
+		--local v_reflected_refl_dir = vector_reflect(v_reflected_dir, v_other_portal_normal)
+
+		--local v_cur_normal_angles = find_vector_angles(v_other_portal:getWorldRotation() * v_current_portal_normal)
+		----local v_dir_angles        = find_vector_angles(v_direction)
+
+		--local v_angle_diff = { pitch = v_cur_normal_angles.pitch - v_dir_angles.pitch, yaw = v_cur_normal_angles.yaw - v_dir_angles.yaw }
+
+		local v_proj_dir = v_reflected_dir
+		--v_proj_dir = v_proj_dir:rotate(-v_angle_diff.pitch, find_right_vector(v_other_portal_normal))
+		--v_proj_dir = v_proj_dir:rotate(-v_angle_diff.yaw, sm.vec3.new(0, 0, 1))
+		draw_line(v_other_portal:getWorldPosition(), v_other_portal:getWorldPosition() + v_proj_dir * 5, 3)
+	end]]
+
 	for k, v in pairs(self.client_enter_timers) do
 		self.client_enter_timers[k] = v - dt
 
@@ -610,6 +654,7 @@ local function spawn_debri_from_shape(self, shape, portal_normal, portal_pos)
 	local v_angular_vel = sm.vec3.new(math.random(0, m_pi_5), math.random(0, m_pi_5), math.random(0, m_pi_5))
 
 	sm.debris.createDebris(shape.uuid, portal_pos, shape.worldRotation, v_debri_vel, v_angular_vel, shape.color, math.random(4, 10))
+	sm.particle.createParticle("portal_teleport_bullet", portal_pos, sm.vec3.getRotation(sm.vec3.new(0, 0, 1), v_debri_vel))
 
 	self.cl_cached_shapes[shape.id] = true
 end
@@ -669,7 +714,9 @@ function PortalGun:client_onTriggerStay(owner, data)
 		elseif v_type_data == "Character" then
 			self.client_enter_timers[v_other_idx] = 1.0
 			sm.particle.createParticle("portal_teleport_bullet", v_other_portal_pos, sm.vec3.getRotation(sm.vec3.new(0, 0, 1), v_other_portal_norm))
-			--portal_teleport_bullet
+			--sm.audio.play("event:/tools/glowstick/gs_bounce", v_other_portal_pos)
+			sm.effect.playEffect("Portanus - Teleport", v_other_portal_pos)
+			--Portanus - Teleport
 		end
 	end
 end
@@ -726,11 +773,6 @@ function PortalGun:server_onTriggerStay(owner, data)
 	end
 end
 
----@return Vec3
-local function vector_reflect(vec, normal)
-	return vec - normal * (2 * normal:dot(vec)) --[[@as Vec3]]
-end
-
 ---@param owner AreaTrigger
 function PortalGun:server_onTriggerProjectile(owner, hit_pos, hit_time, hit_velocity, proj_name, proj_owner, proj_damage, unknown, unknown2, proj_uuid)
 	local v_cur_tick = sm.game.getCurrentTick()
@@ -748,8 +790,8 @@ function PortalGun:server_onTriggerProjectile(owner, hit_pos, hit_time, hit_velo
 
 	local v_other_portal_normal = get_portal_normal(v_other_portal)
 	local v_proj_pos = v_other_portal:getWorldPosition() + v_other_portal_normal * 0.15 --[[@as Vec3]]
-	local v_proj_rot = owner:getWorldRotation() * v_other_portal:getWorldRotation()
-	local v_proj_dir = vector_reflect(v_proj_rot * -hit_velocity:normalize(), v_other_portal_normal) * hit_velocity:length()
+	local v_proj_rot = v_other_portal:getWorldRotation() * owner:getWorldRotation()
+	local v_proj_dir = vector_reflect(hit_velocity:normalize(), v_other_portal_normal) * (hit_velocity:length() * 0.95)
 
 	if type(proj_owner) == "Shape" then
 		if sm.exists(proj_owner) then
@@ -790,6 +832,12 @@ function PortalGun:client_onPortalSpawn(data)
 		sm.particle.createParticle("portal_poof", hit_pos, hit_quat)
 	end
 
+	local cur_effect = self.portal_effects[portal_idx]
+	if sm.exists(cur_effect) and cur_effect:isPlaying() then
+		cur_effect:stopImmediate()
+		cur_effect:start()
+	end
+
 	area_trigger:bindOnStay("client_onTriggerStay")
 	area_trigger:setShapeDetection(true)
 
@@ -803,6 +851,8 @@ function PortalGun:client_onPortalSpawn(data)
 	else
 		self.client_portals[portal_idx] = { portal = area_trigger }
 	end
+
+	self.client_enter_timers[portal_idx] = 1.5
 end
 
 function PortalGun:server_createPortal(data)
