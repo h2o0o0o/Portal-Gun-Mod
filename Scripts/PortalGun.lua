@@ -719,7 +719,7 @@ function PortalGun:client_onTriggerProjectile(owner, hit_pos, hit_time, hit_velo
 
 	local v_other_portal = v_other_portal_data.portal
 	if not sm.exists(v_other_portal) then return end
-	
+
 	local v_other_portal_norm = get_portal_normal(v_other_portal)
 	local v_other_portal_pos = v_other_portal:getWorldPosition() + v_other_portal_norm * 0.05
 
@@ -727,7 +727,7 @@ function PortalGun:client_onTriggerProjectile(owner, hit_pos, hit_time, hit_velo
 
 	self.client_enter_timers[v_other_idx] = 0.5
 
-	return false
+	return not sm.isHost
 end
 
 function PortalGun:client_onTriggerStay(owner, data)
