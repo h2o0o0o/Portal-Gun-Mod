@@ -9,6 +9,12 @@ dofile( "$SURVIVAL_DATA/Scripts/game/survival_projectiles.lua" )
 ---@field localNormal Vec3
 ---@field owner any
 
+---@class ClosingPortalData
+---@field effect Effect
+---@field owner any
+---@field localOffset Vec3
+---@field localNormal Vec3
+
 ---@class PortalGun : ToolClass
 ---@field aiming boolean
 ---@field fpAnimations table
@@ -23,6 +29,7 @@ dofile( "$SURVIVAL_DATA/Scripts/game/survival_projectiles.lua" )
 ---@field portal_effects Effect[]
 ---@field client_portals PortalData[]
 ---@field cl_cached_shapes boolean[]
+---@field cl_closing_portals ClosingPortalData[]
 PortalGun = class()
 
 local renderables = { "$CONTENT_DATA/Tools/Renderables/portalgun_model.rend" }
@@ -65,6 +72,7 @@ function PortalGun:client_onCreate()
 	self.client_portals = {}
 	self.client_enter_timers = {}
 	self.cl_cached_shapes = {}
+	self.cl_closing_portals = {}
 end
 
 function PortalGun:client_onDestroy()
@@ -257,6 +265,23 @@ function PortalGun:client_onUpdate( dt )
 		--v_proj_dir = v_proj_dir:rotate(-v_angle_diff.yaw, sm.vec3.new(0, 0, 1))
 		draw_line(v_other_portal:getWorldPosition(), v_other_portal:getWorldPosition() + v_proj_dir * 5, 3)
 	end]]
+	for k, v in pairs(self.cl_closing_portals) do
+		local v_cur_effect = v.effect
+		if v_cur_effect:isPlaying() then
+			local v_eff_owner = v.owner --[[@as Shape]]
+			if v_eff_owner and sm.exists(v_eff_owner) then
+				local v_eff_pos = v_eff_owner:getInterpolatedWorldPosition() + v_eff_owner.velocity * dt
+
+				v_cur_effect:setPosition(v_eff_pos + v_eff_owner.worldRotation * v.localOffset)
+				v_cur_effect:setRotation(v_eff_owner.worldRotation * sm.vec3.getRotation(sm.vec3.new(0, 0, 1), v.localNormal))
+			else
+				v_cur_effect:stopImmediate()
+			end
+		else
+			v_cur_effect:destroy()
+			self.cl_closing_portals[k] = nil
+		end
+	end
 
 	for k, v in pairs(self.client_enter_timers) do
 		self.client_enter_timers[k] = v - dt
@@ -265,8 +290,6 @@ function PortalGun:client_onUpdate( dt )
 			self.client_enter_timers[k] = nil
 		end
 	end
-
-	--[[self.client_enter_timers]]
 
 	for k, v in pairs(self.client_portals) do
 		if v then
@@ -851,6 +874,31 @@ function PortalGun:server_onTriggerProjectile(owner, hit_pos, hit_time, hit_velo
 	return true
 end
 
+---@param self PortalGun
+---@param v PortalData
+local function client_spawnClosingPortalEffect(self, v, effect_name)
+	local v_owner = v.owner --[[@as Shape]]
+	if v_owner and sm.exists(v_owner) then
+		local v_closing_effect = sm.effect.createEffect(effect_name)
+		v_closing_effect:setPosition(v_owner.worldPosition + v_owner.worldRotation * v.localOffset)
+		v_closing_effect:setRotation(v_owner.worldRotation * sm.vec3.getRotation(sm.vec3.new(0, 0, 1), v.localNormal))
+		v_closing_effect:start()
+
+		local v_new_idx = #self.cl_closing_portals + 1
+		self.cl_closing_portals[v_new_idx] = {
+			effect = v_closing_effect,
+			owner = v.owner,
+			localOffset = v.localOffset,
+			localNormal = v.localNormal
+		}
+	else
+		local v_portal = v.portal
+		if sm.exists(v_portal) then
+			sm.effect.playEffect(effect_name, v_portal:getWorldPosition(), sm.vec3.zero(), v_portal:getWorldRotation())
+		end
+	end
+end
+
 function PortalGun:client_onPortalSpawn(data)
 	local portal_idx = data[1]
 	local hit_pos = data[2]
@@ -889,6 +937,8 @@ function PortalGun:client_onPortalSpawn(data)
 
 	local v_old_portal = self.client_portals[portal_idx]
 	if v_old_portal and sm.exists(v_old_portal.portal) then
+		client_spawnClosingPortalEffect(self, v_old_portal, "Portanus - CloseNoSound")
+
 		sm.areaTrigger.destroy(v_old_portal.portal)
 	end
 
@@ -975,7 +1025,7 @@ function PortalGun:cl_placePortalClient(portal_index)
 	self.network:sendToServer("server_createPortal", { portal_index, v_portal_pos, v_portal_normal, v_portal_owner })
 end
 
-function PortalGun:client_removePortals()
+function PortalGun:client_removePortals(spawn_effects)
 	for k, v in pairs(self.portal_effects) do
 		if v and sm.exists(v) then
 			if v:isPlaying() then
@@ -985,8 +1035,15 @@ function PortalGun:client_removePortals()
 	end
 
 	for k, v in pairs(self.client_portals) do
-		if v and sm.exists(v.portal) then
-			sm.areaTrigger.destroy(v.portal)
+		if v then
+			local v_portal = v.portal
+			if sm.exists(v_portal) then
+				if spawn_effects then
+					client_spawnClosingPortalEffect(self, v, "Portanus - CloseNoSound")
+				end
+
+				sm.areaTrigger.destroy(v_portal)
+			end
 		end
 
 		self.client_portals[k] = nil
@@ -1005,7 +1062,7 @@ end
 
 function PortalGun:client_portalCleanup()
 	if not self.tool:isLocal() then
-		self:client_removePortals()
+		self:client_removePortals(true)
 	end
 end
 
@@ -1016,7 +1073,7 @@ end
 
 function PortalGun:client_onReload()
 	self.network:sendToServer("server_portalCleanup")
-	self:client_removePortals()
+	self:client_removePortals(true)
 	return true
 end
 

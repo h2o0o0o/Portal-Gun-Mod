@@ -60,5 +60,23 @@
 				"name": "event:/tools/vacuum/vacuum_blowout"
 			}
 		]
+	},
+	"Portanus - Close": {
+		"effectList": []
+	},
+	"Portanus - CloseNoSound": {
+		"effectList": [
+			{
+				"type": "particle",
+				"name": "portal_close",
+				"direction": { "x": 0.0, "y": 0.0, "z": 1.0 }	
+			},
+			{
+				"type": "particle",
+				"name": "portal_close_poof",
+				"direction": { "x": 0.0, "y": 0.0, "z": 1.0 },
+				"delay": 0.5
+			}
+		]
 	}
 }

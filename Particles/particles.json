@@ -5,6 +5,8 @@
 		"portal_teleport_bullet.json",
 		"portal_teleport_bullet_obj.json",
 		"portal_poof.json",
+		"portal_close.json",
+		"portal_close_poof.json",
 		"portal_idle.json"
 	]
 }
