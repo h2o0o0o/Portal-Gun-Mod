@@ -3,6 +3,7 @@
 		"portal_particle.json",
 		"portal_particle_start.json",
 		"portal_teleport_bullet.json",
+		"portal_teleport_bullet_obj.json",
 		"portal_poof.json",
 		"portal_idle.json"
 	]
