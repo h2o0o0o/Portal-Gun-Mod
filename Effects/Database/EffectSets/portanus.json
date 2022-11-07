@@ -55,8 +55,6 @@
 		"effectList": [
 			{
 				"type": "audio",
-				//"name": "event:/ui/menu_change_screen"
-				//"name": "event:/tools/glowstick/gs_bounce"
 				"name": "event:/tools/vacuum/vacuum_blowout"
 			}
 		]
@@ -94,7 +92,6 @@
 		"effectList": [
 			{
 				"type": "audio",
-				//"name": "event:/tools/glowstick/gs_bounce",
 				"name": "event:/vehicle/elengines/elengine05",
 				"parameters": [ "load", "rpm" ],
 				"direction": { "x": 0.0, "y": 0.0, "z": 1.0 },
