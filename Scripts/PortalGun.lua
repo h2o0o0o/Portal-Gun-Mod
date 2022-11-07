@@ -34,7 +34,7 @@ PortalGun = class()
 
 local renderables = { "$CONTENT_DATA/Tools/Renderables/portalgun_model.rend" }
 local renderablesTp = { "$GAME_DATA/Character/Char_Male/Animations/char_male_tp_connecttool.rend", "$CONTENT_DATA/Tools/Renderables/portalgun_tp_offset.rend" }
-local renderablesFp = { "$CONTENT_DATA/Tools/Renderables/portalgun_fp_offset.rend" }
+local renderablesFp = { "$CONTENT_DATA/Tools/Renderables/portalgun_fp_anim.rend", "$CONTENT_DATA/Tools/Renderables/portalgun_fp_offset.rend" }
 
 sm.tool.preloadRenderables( renderables )
 sm.tool.preloadRenderables( renderablesTp )
@@ -108,13 +108,13 @@ function PortalGun.loadAnimations( self )
 		self.tool,
 		{
 			shoot = { "spudgun_shoot", { crouch = "spudgun_crouch_shoot" } },
-			idle = { "connecttool_idle" },
+			idle = { "PortalGun_idle" },
 			pickup = { "connecttool_pickup", { nextAnimation = "idle" } },
 			putdown = { "connecttool_putdown" }
 		}
 	)
 	local movementAnimations = {
-		idle = "connecttool_idle",
+		idle = "PortalGun_idle",
 		idleRelaxed = "connecttool_idle_relaxed",
 
 		sprint = "connecttool_sprint",

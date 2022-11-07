@@ -1,0 +1,30 @@
+{
+	"lodList": [
+		{
+			"mesh": "$GAME_DATA/Character/Char_Male/Animations/Animationrefs/aniref_char_male_tpose.dae",
+			"includes": [ "POSITION", "UV0", "NORMAL", "TANGENTS", "BLEND_INDICES", "BLEND_WEIGHTS" ],
+			"maxViewDistance": 1000.0,
+			"animationList": [
+
+				{ "name" : "PortalGun_idle", 			"file" : "$CONTENT_DATA/Tools/Animations/Portal_Gun/FP/portal_gun_fp_idle.dae" },
+				{ "name" : "PortalGun_idle_flip", 		"file" : "$GAME_DATA/Character/Char_Tools/Char_connecttool/Animations/ani_char_connecttool_fp_idle_flip.dae" },
+
+				{ "name" : "PortalGun_use_idle", 		"file" : "$GAME_DATA/Character/Char_Tools/Char_connecttool/Animations/ani_char_connecttool_fp_use_idle.dae" },
+				{ "name" : "PortalGun_use_connect", 	"file" : "$GAME_DATA/Character/Char_Tools/Char_connecttool/Animations/ani_char_connecttool_fp_use_connect.dae" },
+				{ "name" : "PortalGun_use_disconnect",  "file" : "$GAME_DATA/Character/Char_Tools/Char_connecttool/Animations/ani_char_connecttool_fp_use_disconnect.dae" },
+
+				{ "name" : "PortalGun_pickup", 			"file" : "$GAME_DATA/Character/Char_Tools/Char_connecttool/Animations/ani_char_connecttool_fp_pickup.dae" },
+				{ "name" : "PortalGun_putdown", 		"file" : "$GAME_DATA/Character/Char_Tools/Char_connecttool/Animations/ani_char_connecttool_fp_putdown.dae" },
+
+				{ "name" : "PortalGun_sprint_into", 	"file" : "$GAME_DATA/Character/Char_Tools/Char_connecttool/Animations/ani_char_connecttool_fp_idle.dae" },
+				{ "name" : "PortalGun_sprint_exit", 	"file" : "$GAME_DATA/Character/Char_Tools/Char_connecttool/Animations/ani_char_connecttool_fp_idle.dae" },
+				{ "name" : "PortalGun_sprint_idle", 	"file" : "$GAME_DATA/Character/Char_Tools/Char_connecttool/Animations/ani_char_connecttool_fp_idle.dae" },
+
+				{ "name" : "PortalGun_rotate_in", 		"file" : "$GAME_DATA/Character/Char_Tools/Char_connecttool/Animations/ani_char_connecttool_fp_rotate_in.dae" },
+				{ "name" : "PortalGun_rotate_out", 		"file" : "$GAME_DATA/Character/Char_Tools/Char_connecttool/Animations/ani_char_connecttool_fp_rotate_out.dae" },
+				{ "name" : "PortalGun_rotate_right", 	"file" : "$GAME_DATA/Character/Char_Tools/Char_connecttool/Animations/ani_char_connecttool_fp_rotate_right.dae" },
+				{ "name" : "PortalGun_rotate_left", 	"file" : "$GAME_DATA/Character/Char_Tools/Char_connecttool/Animations/ani_char_connecttool_fp_rotate_left.dae" }
+			]
+		}
+	]
+} 
