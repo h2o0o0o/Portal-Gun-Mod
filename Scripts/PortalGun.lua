@@ -34,7 +34,7 @@ PortalGun = class()
 
 local renderables = { "$CONTENT_DATA/Tools/Renderables/portalgun_model.rend" }
 local renderablesTp = { "$GAME_DATA/Character/Char_Male/Animations/char_male_tp_connecttool.rend", "$CONTENT_DATA/Tools/Renderables/portalgun_tp_offset.rend" }
-local renderablesFp = { "$CONTENT_DATA/Tools/Renderables/portalgun_fp_anim.rend", "$CONTENT_DATA/Tools/Renderables/portalgun_fp_offset.rend" }
+local renderablesFp = { "$CONTENT_DATA/Tools/Renderables/portalgun_fp_anim.rend", "$CONTENT_DATA/Tools/Renderables/portalgun_tp_offset.rend" }
 
 sm.tool.preloadRenderables( renderables )
 sm.tool.preloadRenderables( renderablesTp )
@@ -108,13 +108,13 @@ function PortalGun.loadAnimations( self )
 		self.tool,
 		{
 			shoot = { "spudgun_shoot", { crouch = "spudgun_crouch_shoot" } },
-			idle = { "PortalGun_idle" },
+			idle = { "connecttool_idle" },
 			pickup = { "connecttool_pickup", { nextAnimation = "idle" } },
 			putdown = { "connecttool_putdown" }
 		}
 	)
 	local movementAnimations = {
-		idle = "PortalGun_idle",
+		idle = "connecttool_idle",
 		idleRelaxed = "connecttool_idle_relaxed",
 
 		sprint = "connecttool_sprint",
@@ -147,7 +147,7 @@ function PortalGun.loadAnimations( self )
 				equip = { "connecttool_pickup", { nextAnimation = "idle" } },
 				unequip = { "connecttool_putdown" },
 
-				idle = { "connecttool_idle", { looping = true } },
+				idle = { "PortalGun_idle", { looping = true } },
 
 				sprintInto = { "connecttool_sprint_into", { nextAnimation = "sprintIdle",  blendNext = 0.2 } },
 				sprintExit = { "connecttool_sprint_exit", { nextAnimation = "idle",  blendNext = 0 } },
