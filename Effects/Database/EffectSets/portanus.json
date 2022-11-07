@@ -62,7 +62,63 @@
 		]
 	},
 	"Portanus - Close": {
-		"effectList": []
+		"parameterList": {
+			"color": "32a865",
+			"range": 5.0,
+			"coneFade": 0.5,
+			"coneAngle": 85.0,
+			"intensity": 1.5,
+			"maxIntensity": 1.5,
+			"ambient": true,
+			"additive": false,
+			"ambientPosScale": 0.25,
+			"ambientIntensityScale": 0.2,
+			"ambientMaxIntensity": 0.0,
+			"ambientRangeScale": 1.0,
+			"falloffMode": 0,
+			"falloffFactor": 1.0,
+			"shadowMode": 2,
+			"load": 0.5,
+			"rpm": 0.0
+		},
+		"parameterCurves":{
+			"intensity":{
+				"timeline":[
+					{"time":0.0, "value":1.0},
+					{"time":0.5, "value":0.0},
+					{"time":0.51, "value":0.8},
+					{"time":0.9, "value":0.0}
+				]
+			}
+		},
+		"effectList": [
+			{
+				"type": "audio",
+				//"name": "event:/tools/glowstick/gs_bounce",
+				"name": "event:/vehicle/elengines/elengine05",
+				"parameters": [ "load", "rpm" ],
+				"direction": { "x": 0.0, "y": 0.0, "z": 1.0 },
+				"delay": 0.25,
+				"duration": 0.4
+			},
+			{
+				"type": "particle",
+				"name": "portal_close",
+				"direction": { "x": 0.0, "y": 0.0, "z": 1.0 }
+			},
+			{
+				"type": "particle",
+				"name": "portal_close_poof",
+				"direction": { "x": 0.0, "y": 0.0, "z": 1.0 },
+				"delay": 0.5
+			},
+			{
+				"type": "spotLight",
+				"name": "",
+				"direction": { "x": 0.0, "y": 0.0, "z": 1.0 },
+				"duration": 1.5
+			}
+		]
 	},
 	"Portanus - CloseNoSound": {
 		"parameterList": {

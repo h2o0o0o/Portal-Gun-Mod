@@ -34,7 +34,7 @@ PortalGun = class()
 
 local renderables = { "$CONTENT_DATA/Tools/Renderables/portalgun_model.rend" }
 local renderablesTp = { "$GAME_DATA/Character/Char_Male/Animations/char_male_tp_connecttool.rend", "$CONTENT_DATA/Tools/Renderables/portalgun_tp_offset.rend" }
-local renderablesFp = { "$CONTENT_DATA/Tools/Renderables/portalgun_fp_anim.rend", "$CONTENT_DATA/Tools/Renderables/portalgun_tp_offset.rend" }
+local renderablesFp = { "$CONTENT_DATA/Tools/Renderables/portalgun_tp_offset.rend", "$CONTENT_DATA/Tools/Renderables/portalgun_fp_anim.rend" }
 
 sm.tool.preloadRenderables( renderables )
 sm.tool.preloadRenderables( renderablesTp )
@@ -355,14 +355,8 @@ function PortalGun:client_onUpdate( dt )
 			elseif not self.tool:isSprinting() and ( self.fpAnimations.currentAnimation == "sprintIdle" or self.fpAnimations.currentAnimation == "sprintInto" ) then
 				swapFpAnimation( self.fpAnimations, "sprintInto", "sprintExit", 0.0 )
 			end
-
-			if self.aiming and not isAnyOf( self.fpAnimations.currentAnimation, { "aimInto", "aimIdle", "aimShoot" } ) then
-				swapFpAnimation( self.fpAnimations, "aimExit", "aimInto", 0.0 )
-			end
-			if not self.aiming and isAnyOf( self.fpAnimations.currentAnimation, { "aimInto", "aimIdle", "aimShoot" } ) then
-				swapFpAnimation( self.fpAnimations, "aimInto", "aimExit", 0.0 )
-			end
 		end
+
 		updateFpAnimations( self.fpAnimations, self.equipped, dt )
 	end
 
@@ -608,7 +602,10 @@ function PortalGun.client_onEquip( self, animate )
 	for k,v in pairs( renderablesFp ) do currentRenderablesFp[#currentRenderablesFp+1] = v end
 	for k,v in pairs( renderables ) do currentRenderablesTp[#currentRenderablesTp+1] = v end
 	for k,v in pairs( renderables ) do currentRenderablesFp[#currentRenderablesFp+1] = v end
-	self.tool:setTpRenderables( currentRenderablesTp )
+	self.tool:setTpRenderables(currentRenderablesTp)
+	if self.tool:isLocal() then
+		self.tool:setFpRenderables(currentRenderablesFp)
+	end
 
 	self:loadAnimations()
 
@@ -616,7 +613,6 @@ function PortalGun.client_onEquip( self, animate )
 
 	if self.tool:isLocal() then
 		-- Sets PotatoRifle renderable, change this to change the mesh
-		self.tool:setFpRenderables( currentRenderablesFp )
 		swapFpAnimation( self.fpAnimations, "unequip", "equip", 0.2 )
 	end
 end
@@ -1039,7 +1035,7 @@ function PortalGun:client_removePortals(spawn_effects)
 			local v_portal = v.portal
 			if sm.exists(v_portal) then
 				if spawn_effects then
-					client_spawnClosingPortalEffect(self, v, "Portanus - CloseNoSound")
+					client_spawnClosingPortalEffect(self, v, "Portanus - Close")
 				end
 
 				sm.areaTrigger.destroy(v_portal)
