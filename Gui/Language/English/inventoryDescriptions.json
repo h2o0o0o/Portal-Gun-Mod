@@ -1,1 +1,6 @@
-{}
+{
+	"ba3e1c6c-a8cd-4eaa-83c8-b7e95b333a22": {
+		"title": "Portal Gun",
+		"description": "#ffffffA portal gun to flex on em' all\n\nControls:\n #ffff00LMB#ffffff - Spawn portal 1\n #ffff00RMB#ffffff - Spawn portal 2\n #ffff00R#ffffff - Remove portals"
+	}
+}

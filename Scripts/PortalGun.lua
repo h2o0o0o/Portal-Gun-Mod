@@ -152,9 +152,9 @@ function PortalGun.loadAnimations( self )
 				idle = { "PortalGun_idle", { looping = true } },
 				shoot = { "PortalGun_shoot", { nextAnimation = "idle" } },
 
-				sprintInto = { "connecttool_sprint_into", { nextAnimation = "sprintIdle",  blendNext = 0.2 } },
-				sprintExit = { "connecttool_sprint_exit", { nextAnimation = "idle",  blendNext = 0 } },
-				sprintIdle = { "connecttool_sprint_idle", { looping = true } },
+				sprintInto = { "PortalGun_sprint_into", { nextAnimation = "sprintIdle",  blendNext = 0.2 } },
+				sprintExit = { "PortalGun_sprint_exit", { nextAnimation = "idle",  blendNext = 0 } },
+				sprintIdle = { "PortalGun_sprint_idle", { looping = true } },
 			}
 		)
 	end
