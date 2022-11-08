@@ -211,27 +211,8 @@ local function get_portal_normal(portal)
 end
 
 ---@return Vec3
-local function get_portal_right(portal)
-	return portal:getWorldRotation() * sm.vec3.new(0, 1, 0) --[[@as vec3]]
-end
-
-local function draw_line(start_vec, end_vec, steps)
-	for i = 1, steps do
-		sm.particle.createParticle("construct_welding", sm.vec3.lerp(start_vec, end_vec, i / steps))
-	end
-end
-
----@return Vec3
 local function vector_reflect(vec, normal)
 	return vec - normal * (2 * normal:dot(vec)) --[[@as Vec3]]
-end
-
-local function find_vector_angles(vec)
-	local output = {}
-	output.pitch = math.asin(vec.z)
-	output.yaw = math.atan2(vec.y, vec.x)
-
-	return output
 end
 
 local function find_right_vector(vector)
@@ -244,41 +225,6 @@ local portal_color2 = sm.color.new(0x21c29cff)
 local portal_color_vec1 = sm.vec3.new(portal_color1.r, portal_color1.g, portal_color1.b)
 local portal_color_vec2 = sm.vec3.new(portal_color2.r, portal_color2.g, portal_color2.b)
 function PortalGun:client_onUpdate( dt )
-	local hit, result = sm.physics.raycast(sm.camera.getPosition(), sm.camera.getPosition() + sm.camera.getDirection() * 10, nil, sm.physics.filter.areaTrigger)
-	if hit and result.type == "areaTrigger" then
-		local v_direction = (sm.camera.getPosition() - result.pointWorld):normalize()
-
-		local v_current_portal = result:getAreaTrigger()
-		if sm.exists(v_current_portal) then
-			local v_other_portal_data = self.portals[v_current_portal:getUserData().idx]
-			if v_other_portal_data then
-				local v_other_portal = v_other_portal_data.portal
-				if sm.exists(v_other_portal) then
-					local v_other_portal_pos = v_other_portal:getWorldPosition()
-
-					local v_current_portal_normal = get_portal_normal(v_current_portal)
-					local v_other_portal_normal = get_portal_normal(v_other_portal)
-
-					local v_cur_normal_angles = find_vector_angles(v_current_portal_normal)
-					local v_dir_angles = find_vector_angles(v_direction)
-
-					local v_angle_diff = { pitch = v_cur_normal_angles.pitch - v_dir_angles.pitch, yaw = v_cur_normal_angles.yaw - v_dir_angles.yaw }
-
-					local v_right_vec = find_right_vector(v_other_portal_normal)
-					local v_up_vec = v_right_vec:cross(v_other_portal_normal)
-
-					local v_proj_dir = v_other_portal_normal
-					v_proj_dir = v_proj_dir:rotate(-v_angle_diff.pitch, v_right_vec)
-					v_proj_dir = v_proj_dir:rotate(-v_angle_diff.yaw, v_up_vec)
-
-					local v_reflected_vec = vector_reflect(-v_proj_dir, v_other_portal_normal)
-
-					draw_line(v_other_portal_pos, v_other_portal_pos + v_reflected_vec * 2, 4)
-				end
-			end
-		end
-	end
-	
 	for k, v in pairs(self.cl_closing_portals) do
 		local v_cur_effect = v.effect
 		if v_cur_effect:isPlaying() then
@@ -722,6 +668,34 @@ local function create_safe_body_list(body)
 	return v_output
 end
 
+local g_m_half_pi = math.pi * 0.5
+---@return boolean, Vec3
+local function calculate_reflected_portal_direction(current_portal, other_portal, direction)
+	local v_current_portal_normal = get_portal_normal(current_portal)
+	if v_current_portal_normal:dot(direction) > 0.15 then
+		local v_other_portal_normal = get_portal_normal(other_portal)
+
+		--Find the up and right vectors for current portal
+		local v_right_vec = find_right_vector(v_current_portal_normal)
+		local v_up_vec    = v_right_vec:cross(v_current_portal_normal)
+
+		local v_pitch_offset = v_up_vec:dot(direction) * g_m_half_pi
+		local v_yaw_offset = v_right_vec:dot(direction) * g_m_half_pi
+
+		--Find the up and right vectors for other portal
+		local v_other_right_vec = find_right_vector(v_other_portal_normal)
+		local v_other_up_vec = v_other_right_vec:cross(v_other_portal_normal)
+
+		local v_proj_dir = v_other_portal_normal
+		v_proj_dir = v_proj_dir:rotate(v_pitch_offset, v_other_right_vec)
+		v_proj_dir = v_proj_dir:rotate(-v_yaw_offset, v_other_up_vec)
+
+		return true, vector_reflect(-v_proj_dir, v_other_portal_normal)
+	end
+
+	return false, sm.vec3.zero()
+end
+
 function PortalGun:client_onTriggerProjectile(owner, hit_pos, hit_time, hit_velocity, proj_name, proj_owner, proj_damage, unknown, unknown2, proj_uuid)
 	local v_other_idx = owner:getUserData().idx
 	local v_other_portal_data = self.client_portals[v_other_idx]
@@ -730,12 +704,13 @@ function PortalGun:client_onTriggerProjectile(owner, hit_pos, hit_time, hit_velo
 	local v_other_portal = v_other_portal_data.portal
 	if not sm.exists(v_other_portal) then return end
 
-	local v_other_portal_norm = get_portal_normal(v_other_portal)
-	local v_other_portal_pos = v_other_portal:getWorldPosition() + v_other_portal_norm * 0.05
+	local success, reflected_vec = calculate_reflected_portal_direction(owner, v_other_portal, -hit_velocity:normalize())
+	if success then
+		local v_other_portal_pos = v_other_portal:getWorldPosition() + get_portal_normal(v_other_portal) * 0.05
+		sm.particle.createParticle("portal_teleport_bullet_obj", v_other_portal_pos, sm.vec3.getRotation(sm.vec3.new(0, 0, 1), reflected_vec))
 
-	sm.particle.createParticle("portal_teleport_bullet_obj", v_other_portal_pos, sm.vec3.getRotation(sm.vec3.new(0, 0, 1), v_other_portal_norm))
-
-	self.client_enter_timers[v_other_idx] = 0.5
+		self.client_enter_timers[v_other_idx] = 0.5
+	end
 
 	return not sm.isHost
 end
@@ -858,25 +833,23 @@ function PortalGun:server_onTriggerProjectile(owner, hit_pos, hit_time, hit_velo
 	local v_other_portal = v_other_portal_data.portal
 	if not sm.exists(v_other_portal) then return end
 
-	local v_other_portal_normal = get_portal_normal(v_other_portal)
-	local v_proj_pos = v_other_portal:getWorldPosition() + v_other_portal_normal * 0.15
-	local v_proj_dir = sm.noise.gunSpread(v_other_portal_normal, 20) * (hit_velocity:length() * 0.8)
-
-	--[[local v_other_portal_normal = get_portal_normal(v_other_portal)
-	local v_proj_pos = v_other_portal:getWorldPosition() + v_other_portal_normal * 0.15
-	local v_proj_rot = owner:getWorldRotation() * v_other_portal:getWorldRotation()
-	local v_proj_dir = v_proj_rot * vector_reflect(hit_velocity:normalize(), v_other_portal_normal) * (hit_velocity:length() * 0.95)]]
-
 	local v_new_damage = math.floor(proj_damage * 0.9)
 	if v_new_damage > 0 then
 		if proj_owner and sm.exists(proj_owner) then
-			if type(proj_owner) == "Shape" then
-				local v_global_pos = proj_owner:transformPoint(v_proj_pos)
-				local v_global_vel = proj_owner:transformDirection(v_proj_dir)
-	
-				sm.projectile.shapeProjectileAttack(proj_uuid, v_new_damage, v_global_pos, v_global_vel, proj_owner)
-			else
-				sm.projectile.projectileAttack(proj_uuid, v_new_damage, v_proj_pos, v_proj_dir, proj_owner)
+			local success, v_reflected_dir = calculate_reflected_portal_direction(owner, v_other_portal, -hit_velocity:normalize())
+			if success then
+				local v_other_portal_normal = get_portal_normal(v_other_portal)
+				local v_proj_pos = v_other_portal:getWorldPosition() + v_other_portal_normal * 0.15
+				local v_proj_dir = v_reflected_dir * (hit_velocity:length() * 0.95)
+
+				if type(proj_owner) == "Shape" then
+					local v_global_pos = proj_owner:transformPoint(v_proj_pos)
+					local v_global_vel = proj_owner:transformDirection(v_proj_dir)
+		
+					sm.projectile.shapeProjectileAttack(proj_uuid, v_new_damage, v_global_pos, v_global_vel, proj_owner)
+				else
+					sm.projectile.projectileAttack(proj_uuid, v_new_damage, v_proj_pos, v_proj_dir, proj_owner)
+				end
 			end
 		end
 	end
