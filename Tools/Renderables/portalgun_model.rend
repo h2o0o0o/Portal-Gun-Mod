@@ -15,7 +15,7 @@
 					"material": "Glass",
 					"textureList": [
 						"$CONTENT_DATA/Tools/Textures/glass_dif.png",
-						"",
+						"$GAME_DATA/Textures/Default/default_asg.tga",
 						"$GAME_DATA/Textures/Default/default_nor.tga"
 					]
 				},
