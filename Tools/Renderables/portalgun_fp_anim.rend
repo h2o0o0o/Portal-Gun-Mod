@@ -5,7 +5,6 @@
 			"includes": [ "POSITION", "UV0", "NORMAL", "TANGENTS", "BLEND_INDICES", "BLEND_WEIGHTS" ],
 			"maxViewDistance": 1000.0,
 			"animationList": [
-
 				{ "name" : "PortalGun_idle", 			"file" : "$CONTENT_DATA/Tools/Animations/Portal_Gun/FP/portal_gun_fp_idle.dae" },
 				{ "name" : "PortalGun_idle_flip", 		"file" : "$GAME_DATA/Character/Char_Tools/Char_connecttool/Animations/ani_char_connecttool_fp_idle_flip.dae" },
 
