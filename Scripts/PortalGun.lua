@@ -145,9 +145,12 @@ function PortalGun.loadAnimations( self )
 			self.tool,
 			{
 				equip = { "PortalGun_pickup", { nextAnimation = "idle" } },
+				equip_spin = { "PortalGun_pickup_spin", { nextAnimation = "idle" } },
+
 				unequip = { "PortalGun_putdown" },
 
 				idle = { "PortalGun_idle", { looping = true } },
+				shoot = { "PortalGun_shoot", { nextAnimation = "idle" } },
 
 				sprintInto = { "connecttool_sprint_into", { nextAnimation = "sprintIdle",  blendNext = 0.2 } },
 				sprintExit = { "connecttool_sprint_exit", { nextAnimation = "idle",  blendNext = 0 } },
@@ -572,8 +575,11 @@ function PortalGun.client_onEquip( self, animate )
 	setTpAnimation( self.tpAnimations, "pickup", 0.0001 )
 
 	if self.tool:isLocal() then
+		local equip_random = (math.random(0, 100) > 90) and "equip_spin" or "equip"
+		print(equip_random)
+
 		-- Sets PotatoRifle renderable, change this to change the mesh
-		swapFpAnimation( self.fpAnimations, "unequip", "equip", 0.2 )
+		swapFpAnimation( self.fpAnimations, "unequip", equip_random, 0.2 )
 	end
 end
 
@@ -1006,6 +1012,7 @@ function PortalGun:cl_placePortalClient(portal_index)
 	end
 
 	self.network:sendToServer("server_createPortal", { portal_index, v_portal_pos, v_portal_normal, v_portal_owner })
+	setFpAnimation(self.fpAnimations, "shoot", 0.0)
 end
 
 function PortalGun:client_removePortals(spawn_effects)
