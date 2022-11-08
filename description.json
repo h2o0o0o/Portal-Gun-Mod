@@ -1,7 +1,8 @@
 {
    "allow_add_mods" : true,
-   "custom_icons" : false,
-   "description" : "portal gun\n",
+   "custom_icons" : true,
+   "description" : "[img]https://steamusercontent-a.akamaihd.net/ugc/2422250057103161085/A682E0A36F63D71A8E643AA7ACC710E907F8937C/[/img]\r\n\r\nThis portal gun can be used to teleport animals and farmbots. It can also be placed on any moving vehicle.",
+   "fileId" : 2886179111,
    "localId" : "2c5d55e8-eab7-4596-95a3-c327f9e2b5d2",
    "name" : "Portal Gun",
    "type" : "Blocks and Parts",
