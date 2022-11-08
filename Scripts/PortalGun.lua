@@ -144,8 +144,8 @@ function PortalGun.loadAnimations( self )
 		self.fpAnimations = createFpAnimations(
 			self.tool,
 			{
-				equip = { "connecttool_pickup", { nextAnimation = "idle" } },
-				unequip = { "connecttool_putdown" },
+				equip = { "PortalGun_pickup", { nextAnimation = "idle" } },
+				unequip = { "PortalGun_putdown" },
 
 				idle = { "PortalGun_idle", { looping = true } },
 
@@ -210,6 +210,11 @@ local function get_portal_normal(portal)
 	return portal:getWorldRotation() * _sm_vec3_z --[[@as Vec3]]
 end
 
+---@return Vec3
+local function get_portal_right(portal)
+	return portal:getWorldRotation() * sm.vec3.new(0, 1, 0) --[[@as vec3]]
+end
+
 local function draw_line(start_vec, end_vec, steps)
 	for i = 1, steps do
 		sm.particle.createParticle("construct_welding", sm.vec3.lerp(start_vec, end_vec, i / steps))
@@ -239,32 +244,41 @@ local portal_color2 = sm.color.new(0x21c29cff)
 local portal_color_vec1 = sm.vec3.new(portal_color1.r, portal_color1.g, portal_color1.b)
 local portal_color_vec2 = sm.vec3.new(portal_color2.r, portal_color2.g, portal_color2.b)
 function PortalGun:client_onUpdate( dt )
-	--[[local hit, result = sm.physics.raycast(sm.camera.getPosition(), sm.camera.getPosition() + sm.camera.getDirection() * 10, nil, sm.physics.filter.areaTrigger)
+	local hit, result = sm.physics.raycast(sm.camera.getPosition(), sm.camera.getPosition() + sm.camera.getDirection() * 10, nil, sm.physics.filter.areaTrigger)
 	if hit and result.type == "areaTrigger" then
 		local v_direction = (sm.camera.getPosition() - result.pointWorld):normalize()
 
 		local v_current_portal = result:getAreaTrigger()
-		local v_other_portal_data = self.portals[v_current_portal:getUserData().idx]
-		local v_other_portal = v_other_portal_data.portal
-		local v_other_portal_pos = v_other_portal:getWorldPosition()
-		local v_current_portal_pos = v_current_portal:getWorldPosition()
+		if sm.exists(v_current_portal) then
+			local v_other_portal_data = self.portals[v_current_portal:getUserData().idx]
+			if v_other_portal_data then
+				local v_other_portal = v_other_portal_data.portal
+				if sm.exists(v_other_portal) then
+					local v_other_portal_pos = v_other_portal:getWorldPosition()
 
-		local v_other_portal_normal = get_portal_normal(v_other_portal)
-		local v_current_portal_normal = get_portal_normal(v_current_portal)
+					local v_current_portal_normal = get_portal_normal(v_current_portal)
+					local v_other_portal_normal = get_portal_normal(v_other_portal)
 
-		local v_reflected_dir = vector_reflect(v_direction, v_other_portal_normal)
-		--local v_reflected_refl_dir = vector_reflect(v_reflected_dir, v_other_portal_normal)
+					local v_cur_normal_angles = find_vector_angles(v_current_portal_normal)
+					local v_dir_angles = find_vector_angles(v_direction)
 
-		--local v_cur_normal_angles = find_vector_angles(v_other_portal:getWorldRotation() * v_current_portal_normal)
-		----local v_dir_angles        = find_vector_angles(v_direction)
+					local v_angle_diff = { pitch = v_cur_normal_angles.pitch - v_dir_angles.pitch, yaw = v_cur_normal_angles.yaw - v_dir_angles.yaw }
 
-		--local v_angle_diff = { pitch = v_cur_normal_angles.pitch - v_dir_angles.pitch, yaw = v_cur_normal_angles.yaw - v_dir_angles.yaw }
+					local v_right_vec = find_right_vector(v_other_portal_normal)
+					local v_up_vec = v_right_vec:cross(v_other_portal_normal)
 
-		local v_proj_dir = v_reflected_dir
-		--v_proj_dir = v_proj_dir:rotate(-v_angle_diff.pitch, find_right_vector(v_other_portal_normal))
-		--v_proj_dir = v_proj_dir:rotate(-v_angle_diff.yaw, sm.vec3.new(0, 0, 1))
-		draw_line(v_other_portal:getWorldPosition(), v_other_portal:getWorldPosition() + v_proj_dir * 5, 3)
-	end]]
+					local v_proj_dir = v_other_portal_normal
+					v_proj_dir = v_proj_dir:rotate(-v_angle_diff.pitch, v_right_vec)
+					v_proj_dir = v_proj_dir:rotate(-v_angle_diff.yaw, v_up_vec)
+
+					local v_reflected_vec = vector_reflect(-v_proj_dir, v_other_portal_normal)
+
+					draw_line(v_other_portal_pos, v_other_portal_pos + v_reflected_vec * 2, 4)
+				end
+			end
+		end
+	end
+	
 	for k, v in pairs(self.cl_closing_portals) do
 		local v_cur_effect = v.effect
 		if v_cur_effect:isPlaying() then
