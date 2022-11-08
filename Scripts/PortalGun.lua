@@ -576,7 +576,6 @@ function PortalGun.client_onEquip( self, animate )
 
 	if self.tool:isLocal() then
 		local equip_random = (math.random(0, 100) > 90) and "equip_spin" or "equip"
-		print(equip_random)
 
 		-- Sets PotatoRifle renderable, change this to change the mesh
 		swapFpAnimation( self.fpAnimations, "unequip", equip_random, 0.2 )

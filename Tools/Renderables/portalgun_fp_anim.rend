@@ -18,9 +18,9 @@
 				{ "name" : "PortalGun_putdown", 		"file" : "$CONTENT_DATA/Tools/Animations/Portal_Gun/FP/portal_gun_fp_putdown.dae" },
 				{ "name" : "PortalGun_shoot",           "file" : "$CONTENT_DATA/Tools/Animations/Portal_Gun/FP/portal_gun_fp_shoot.dae" },
 
-				{ "name" : "PortalGun_sprint_into", 	"file" : "$GAME_DATA/Character/Char_Tools/Char_connecttool/Animations/ani_char_connecttool_fp_idle.dae" },
-				{ "name" : "PortalGun_sprint_exit", 	"file" : "$GAME_DATA/Character/Char_Tools/Char_connecttool/Animations/ani_char_connecttool_fp_idle.dae" },
-				{ "name" : "PortalGun_sprint_idle", 	"file" : "$GAME_DATA/Character/Char_Tools/Char_connecttool/Animations/ani_char_connecttool_fp_idle.dae" },
+				{ "name" : "PortalGun_sprint_into", 	"file" : "$CONTENT_DATA/Tools/Animations/Portal_Gun/FP/portal_gun_fp_sprint_into.dae" },
+				{ "name" : "PortalGun_sprint_exit", 	"file" : "$CONTENT_DATA/Tools/Animations/Portal_Gun/FP/portal_gun_fp_sprint_exit.dae" },
+				{ "name" : "PortalGun_sprint_idle", 	"file" : "$CONTENT_DATA/Tools/Animations/Portal_Gun/FP/portal_gun_fp_sprint_idle.dae" },
 
 				{ "name" : "PortalGun_rotate_in", 		"file" : "$GAME_DATA/Character/Char_Tools/Char_connecttool/Animations/ani_char_connecttool_fp_rotate_in.dae" },
 				{ "name" : "PortalGun_rotate_out", 		"file" : "$GAME_DATA/Character/Char_Tools/Char_connecttool/Animations/ani_char_connecttool_fp_rotate_out.dae" },
