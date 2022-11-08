@@ -720,7 +720,7 @@ function PortalGun:client_onTriggerProjectile(owner, hit_pos, hit_time, hit_velo
 	return not sm.isHost
 end
 
-function PortalGun:client_onTriggerStay(owner, data)
+local function client_onTriggerStayInternal(self, owner, data, character_allowed)
 	local v_other_idx = owner:getUserData().idx
 	local v_other_portal_data = self.client_portals[v_other_idx]
 	if not v_other_portal_data then return end
@@ -761,12 +761,20 @@ function PortalGun:client_onTriggerStay(owner, data)
 					end
 				end
 			end
-		elseif v_type_data == "Character" then
+		elseif v_type_data == "Character" and character_allowed then
 			self.client_enter_timers[v_other_idx] = 1.0
 			sm.particle.createParticle("portal_teleport_bullet", v_other_portal_pos, sm.vec3.getRotation(sm.vec3.new(0, 0, 1), v_other_portal_norm))
 			sm.effect.playEffect("Portanus - Teleport", v_other_portal_pos)
 		end
 	end
+end
+
+function PortalGun:client_onTriggerEnter(owner, data)
+	client_onTriggerStayInternal(self, owner, data, true)
+end
+
+function PortalGun:client_onTriggerStay(owner, data)
+	client_onTriggerStayInternal(self, owner, data, false)
 end
 
 local _sm_item_isBlock = sm.item.isBlock
@@ -919,7 +927,7 @@ function PortalGun:client_onPortalSpawn(data)
 	end
 
 	area_trigger:bindOnStay("client_onTriggerStay")
-	area_trigger:bindOnEnter("client_onTriggerStay")
+	area_trigger:bindOnEnter("client_onTriggerEnter")
 	area_trigger:bindOnProjectile("client_onTriggerProjectile")
 	area_trigger:setShapeDetection(true)
 
