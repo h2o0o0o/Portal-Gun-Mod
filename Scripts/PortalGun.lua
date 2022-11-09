@@ -762,9 +762,12 @@ local function client_onTriggerStayInternal(self, owner, data, character_allowed
 				end
 			end
 		elseif v_type_data == "Character" and character_allowed then
-			self.client_enter_timers[v_other_idx] = 1.0
-			sm.particle.createParticle("portal_teleport_bullet", v_other_portal_pos, sm.vec3.getRotation(sm.vec3.new(0, 0, 1), v_other_portal_norm))
-			sm.effect.playEffect("Portanus - Teleport", v_other_portal_pos)
+			if v:getLockingInteractable() == nil then
+				self.client_enter_timers[v_other_idx] = 1.0
+				
+				local v_rot_quat = sm.vec3.getRotation(sm.vec3.new(0, 0, 1), v_other_portal_norm)
+				sm.effect.playEffect("Portanus - Teleport", v_other_portal_pos, sm.vec3.zero(), v_rot_quat)
+			end
 		end
 	end
 end
@@ -800,25 +803,26 @@ function PortalGun:server_onTriggerStay(owner, data)
 	for k, v in ipairs(data) do
 		local v_type_str = type(v)
 		if (v_type_str == "Character" or v_type_str == "Unit") and self.cooldown_data[v.id] == nil then
-			self.cooldown_data[v.id] = 4
+			if v:getLockingInteractable() == nil then
+				self.cooldown_data[v.id] = 4
 
-			local v_up_dot = math.abs(v_other_portal_normal:dot(sm.vec3.new(0, 0, 1)))
-			local v_up_offset = v_up_dot * v:getHeight() * 0.5
-			local v_radius_offset = (1.0 - v_up_dot) * v:getRadius()
-			local v_final_offset = v_other_portal_normal * (v_up_offset + v_radius_offset)
+				local v_up_dot = math.abs(v_other_portal_normal:dot(sm.vec3.new(0, 0, 1)))
+				local v_up_offset = v_up_dot * v:getHeight() * 0.5
+				local v_radius_offset = (1.0 - v_up_dot) * v:getRadius()
+				local v_final_offset = v_other_portal_normal * (v_up_offset + v_radius_offset)
+				v:setWorldPosition(v_other_portal:getWorldPosition() + v_final_offset)
 
-			v:setWorldPosition(v_other_portal:getWorldPosition() + v_final_offset)
+				if v:isTumbling() then
+					local v_vel = v:getTumblingLinearVelocity()
 
-			if v:isTumbling() then
-				local v_vel = v:getTumblingLinearVelocity()
+					v:applyTumblingImpulse(v_vel * -v.mass)
+					v:applyTumblingImpulse(v_other_portal_normal * v_vel:length() * v.mass)
+				else
+					local v_vel = v.velocity
 
-				v:applyTumblingImpulse(v_vel * -v.mass)
-				v:applyTumblingImpulse(v_other_portal_normal * v_vel:length() * v.mass)
-			else
-				local v_vel = v.velocity
-
-				sm.physics.applyImpulse(v --[[@as Character]], v_vel * -v.mass, true)
-				sm.physics.applyImpulse(v --[[@as Character]], v_other_portal_normal * v_vel:length() * v.mass, true)
+					sm.physics.applyImpulse(v --[[@as Character]], v_vel * -v.mass, true)
+					sm.physics.applyImpulse(v --[[@as Character]], v_other_portal_normal * v_vel:length() * v.mass, true)
+				end
 			end
 		elseif v_type_str == "Body" then
 			if v_self_owner then

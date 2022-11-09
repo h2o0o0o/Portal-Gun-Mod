@@ -56,6 +56,10 @@
 			{
 				"type": "audio",
 				"name": "event:/tools/vacuum/vacuum_blowout"
+			},
+			{
+				"type": "particle",
+				"name": "portal_teleport_bullet"
 			}
 		]
 	},
