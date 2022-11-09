@@ -189,7 +189,7 @@ function PortalGun.loadAnimations( self )
 		jumpDispersionMultiplier = 2
 	}
 
-	self.fireCooldownTimer = 0.0
+	self.fireCooldownTimer = 0.7
 	self.spreadCooldownTimer = 0.0
 
 	self.movementDispersion = 0.0
@@ -369,6 +369,7 @@ function PortalGun:client_onUpdate( dt )
 	self.shootEffect:setRotation( rot )
 
 	-- Timers
+	print(self.fireCooldownTimer)
 	self.fireCooldownTimer = math.max( self.fireCooldownTimer - dt, 0.0 )
 	self.spreadCooldownTimer = math.max( self.spreadCooldownTimer - dt, 0.0 )
 	self.sprintCooldownTimer = math.max( self.sprintCooldownTimer - dt, 0.0 )
@@ -764,7 +765,7 @@ local function client_onTriggerStayInternal(self, owner, data, character_allowed
 		elseif v_type_data == "Character" and character_allowed then
 			if v:getLockingInteractable() == nil then
 				self.client_enter_timers[v_other_idx] = 1.0
-				
+
 				local v_rot_quat = sm.vec3.getRotation(sm.vec3.new(0, 0, 1), v_other_portal_norm)
 				sm.effect.playEffect("Portanus - Teleport", v_other_portal_pos, sm.vec3.zero(), v_rot_quat)
 			end
@@ -1013,6 +1014,12 @@ local g_allowed_placement_types =
 function PortalGun:cl_placePortalClient(portal_index)
 	local owner = self.tool:getOwner()
 	if owner == nil or owner.character == nil then return end
+
+	if self.fireCooldownTimer > 0.0 then
+		return
+	end
+
+	self.fireCooldownTimer = 0.5
 
 	local hit, result = sm.localPlayer.getRaycast(500)
 	if not hit then return end
