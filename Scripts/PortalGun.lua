@@ -313,10 +313,12 @@ function PortalGun:client_onUpdate( dt )
 
 	if self.tool:isLocal() then
 		if self.equipped then
-			if isSprinting and self.fpAnimations.currentAnimation ~= "sprintInto" and self.fpAnimations.currentAnimation ~= "sprintIdle" then
-				swapFpAnimation( self.fpAnimations, "sprintExit", "sprintInto", 0.0 )
-			elseif not self.tool:isSprinting() and ( self.fpAnimations.currentAnimation == "sprintIdle" or self.fpAnimations.currentAnimation == "sprintInto" ) then
-				swapFpAnimation( self.fpAnimations, "sprintInto", "sprintExit", 0.0 )
+			if self.fpAnimations.currentAnimation ~= "shoot" then
+				if isSprinting and self.fpAnimations.currentAnimation ~= "sprintInto" and self.fpAnimations.currentAnimation ~= "sprintIdle" then
+					swapFpAnimation( self.fpAnimations, "sprintExit", "sprintInto", 0.0 )
+				elseif not self.tool:isSprinting() and ( self.fpAnimations.currentAnimation == "sprintIdle" or self.fpAnimations.currentAnimation == "sprintInto" ) then
+					swapFpAnimation( self.fpAnimations, "sprintInto", "sprintExit", 0.0 )
+				end
 			end
 		end
 
@@ -369,7 +371,6 @@ function PortalGun:client_onUpdate( dt )
 	self.shootEffect:setRotation( rot )
 
 	-- Timers
-	print(self.fireCooldownTimer)
 	self.fireCooldownTimer = math.max( self.fireCooldownTimer - dt, 0.0 )
 	self.spreadCooldownTimer = math.max( self.spreadCooldownTimer - dt, 0.0 )
 	self.sprintCooldownTimer = math.max( self.sprintCooldownTimer - dt, 0.0 )
