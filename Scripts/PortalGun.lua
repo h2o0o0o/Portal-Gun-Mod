@@ -87,6 +87,19 @@ function PortalGun:client_onDestroy()
 			v:destroy()
 		end
 	end
+
+	for k, v in pairs(self.cl_closing_portals) do
+		if v then
+			local v_eff = v.effect
+			if v_eff and sm.exists(v_eff) then
+				if v_eff:isPlaying() then
+					v_eff:stopImmediate()
+				end
+
+				v_eff:destroy()
+			end
+		end
+	end
 end
 
 function PortalGun:server_onCreate()
