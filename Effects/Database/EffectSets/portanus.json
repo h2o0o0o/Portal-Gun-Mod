@@ -168,5 +168,13 @@
 				"duration": 1.5
 			}
 		]
+	},
+	"PortalGun - Error": {
+		"effectList": [
+			{
+				"type": "audio",
+				"name": "event:/tools/weldtool/wt_error"
+			}
+		]
 	}
 }

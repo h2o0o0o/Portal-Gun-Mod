@@ -237,7 +237,7 @@ local function find_right_vector(vector)
 end
 
 local portal_color1 = sm.color.new(0x32a865ff)
-local portal_color2 = sm.color.new(0x21c29cff)
+local portal_color2 = sm.color.new(0x00cc58ff)
 local portal_color_vec1 = sm.vec3.new(portal_color1.r, portal_color1.g, portal_color1.b)
 local portal_color_vec2 = sm.vec3.new(portal_color2.r, portal_color2.g, portal_color2.b)
 function PortalGun:client_onUpdate( dt )
@@ -1025,22 +1025,15 @@ local g_allowed_placement_types =
 	["terrainAsset"] = true
 }
 
-function PortalGun:cl_placePortalClient(portal_index)
-	local owner = self.tool:getOwner()
-	if owner == nil or owner.character == nil then return end
-
-	if self.fireCooldownTimer > 0.0 then
-		return
-	end
-
-	self.fireCooldownTimer = 0.5
-
+local function place_portal_client_internal(self, portal_index)
 	local hit, result = sm.localPlayer.getRaycast(500)
-	if not hit then return end
+	if not hit then
+		return false
+	end
 
 	local r_type = result.type
 	if g_allowed_placement_types[r_type] == nil then
-		return
+		return false
 	end
 
 	local v_portal_pos = result.pointWorld
@@ -1049,7 +1042,7 @@ function PortalGun:cl_placePortalClient(portal_index)
 	if r_type == "body" then
 		v_portal_owner = result:getShape()
 		if sm.item.isJoint(v_portal_owner.uuid) then
-			return
+			return false
 		end
 
 		v_portal_pos    = v_portal_owner:transformPoint(result.pointWorld + result.normalWorld/16)
@@ -1057,7 +1050,26 @@ function PortalGun:cl_placePortalClient(portal_index)
 	end
 
 	self.network:sendToServer("server_createPortal", { portal_index, v_portal_pos, v_portal_normal, v_portal_owner })
+	return true
+end
+
+function PortalGun:cl_placePortalClient(portal_index)
+	local owner = self.tool:getOwner()
+	if owner == nil or owner.character == nil then return end
+
+	if self.fireCooldownTimer > 0.0 then
+		return
+	end
+
 	setFpAnimation(self.fpAnimations, "shoot", 0.0)
+	self.fireCooldownTimer = 0.5
+
+	if not place_portal_client_internal(self, portal_index) then
+		local pl_char = sm.localPlayer.getPlayer():getCharacter()
+		if pl_char and sm.exists(pl_char) then
+			sm.effect.playHostedEffect("PortalGun - Error", pl_char)
+		end
+	end
 end
 
 function PortalGun:client_removePortals(spawn_effects)
