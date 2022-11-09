@@ -800,13 +800,26 @@ function PortalGun:server_onTriggerStay(owner, data)
 	for k, v in ipairs(data) do
 		local v_type_str = type(v)
 		if (v_type_str == "Character" or v_type_str == "Unit") and self.cooldown_data[v.id] == nil then
-			self.cooldown_data[v.id] = 2
+			self.cooldown_data[v.id] = 4
 
-			v:setWorldPosition(v_other_portal:getWorldPosition() + v_other_portal_normal * (v:getHeight() * 0.5) --[[@as Vec3]])
-			local v_vel = v.velocity
+			local v_up_dot = math.abs(v_other_portal_normal:dot(sm.vec3.new(0, 0, 1)))
+			local v_up_offset = v_up_dot * v:getHeight() * 0.5
+			local v_radius_offset = (1.0 - v_up_dot) * v:getRadius()
+			local v_final_offset = v_other_portal_normal * (v_up_offset + v_radius_offset)
 
-			sm.physics.applyImpulse(v --[[@as Character]], v_vel * -v.mass, true)
-			sm.physics.applyImpulse(v --[[@as Character]], v_other_portal_normal * v_vel:length() * v.mass --[[@as Vec3]], true)
+			v:setWorldPosition(v_other_portal:getWorldPosition() + v_final_offset)
+
+			if v:isTumbling() then
+				local v_vel = v:getTumblingLinearVelocity()
+
+				v:applyTumblingImpulse(v_vel * -v.mass)
+				v:applyTumblingImpulse(v_other_portal_normal * v_vel:length() * v.mass)
+			else
+				local v_vel = v.velocity
+
+				sm.physics.applyImpulse(v --[[@as Character]], v_vel * -v.mass, true)
+				sm.physics.applyImpulse(v --[[@as Character]], v_other_portal_normal * v_vel:length() * v.mass, true)
+			end
 		elseif v_type_str == "Body" then
 			if v_self_owner then
 				local v_owner_creation_id = v_self_owner.body:getCreationId()
@@ -896,10 +909,10 @@ local function client_spawnClosingPortalEffect(self, v, effect_name)
 end
 
 function PortalGun:client_onPortalSpawn(data)
-	local portal_idx = data[1]
-	local hit_pos = data[2]
-	local hit_normal = data[3]
-	local portal_owner = data[4]
+	local portal_idx   = data[1]
+	local hit_pos      = data[2] --[[@as Vec3]]
+	local hit_normal   = data[3] --[[@as Vec3]]
+	local portal_owner = data[4] --[[@as Shape]]
 
 	if portal_owner and not sm.exists(portal_owner) then
 		return
@@ -907,15 +920,15 @@ function PortalGun:client_onPortalSpawn(data)
 
 	local area_trigger = nil
 	if portal_owner then
-		local pos_calc = portal_owner.worldPosition + portal_owner.worldRotation * hit_pos --[[@as Vec3]]
-		local quat_calc = portal_owner.worldRotation * sm.vec3.getRotation(sm.vec3.new(0, 0, 1), hit_normal) --[[@as Quat]]
+		local pos_calc = portal_owner.worldPosition + portal_owner.worldRotation * hit_pos
+		local quat_calc = portal_owner.worldRotation * sm.vec3.getRotation(sm.vec3.new(0, 0, 1), hit_normal)
 		area_trigger = sm.areaTrigger.createBox(sm.vec3.new(0.8, 0.8, 0.05), pos_calc, quat_calc, sm.areaTrigger.filter.all, { idx = (portal_idx % 2) + 1 })
 
-		local quat_calc2 = portal_owner.worldRotation * sm.vec3.getRotation(sm.vec3.new(0, 0, 1), hit_normal) --[[@as Quat]]
+		local quat_calc2 = portal_owner.worldRotation * sm.vec3.getRotation(sm.vec3.new(0, 0, 1), hit_normal)
 		sm.particle.createParticle("portal_poof", pos_calc, quat_calc2)
 	else
 		local hit_quat = sm.vec3.getRotation(sm.vec3.new(0, 0, 1), hit_normal)
-		area_trigger = sm.areaTrigger.createBox(sm.vec3.new(0.8, 0.8, 0.05), hit_pos + hit_normal * 0.1 --[[@as Vec3]], hit_quat, sm.areaTrigger.filter.all, { idx = (portal_idx % 2) + 1 })
+		area_trigger = sm.areaTrigger.createBox(sm.vec3.new(0.8, 0.8, 0.05), hit_pos + hit_normal * 0.1, hit_quat, sm.areaTrigger.filter.all, { idx = (portal_idx % 2) + 1 })
 
 		sm.particle.createParticle("portal_poof", hit_pos, hit_quat)
 	end
@@ -948,10 +961,10 @@ function PortalGun:client_onPortalSpawn(data)
 end
 
 function PortalGun:server_createPortal(data)
-	local portal_idx = data[1]
-	local hit_pos = data[2]
-	local hit_normal = data[3]
-	local portal_owner = data[4]
+	local portal_idx   = data[1]
+	local hit_pos      = data[2] --[[@as Vec3]]
+	local hit_normal   = data[3] --[[@as Vec3]]
+	local portal_owner = data[4] --[[@as Shape]]
 
 	if portal_owner and not sm.exists(portal_owner) then
 		return
@@ -959,12 +972,12 @@ function PortalGun:server_createPortal(data)
 
 	local area_trigger = nil
 	if portal_owner then
-		local pos_calc = portal_owner.worldPosition + portal_owner.worldRotation * hit_pos --[[@as Vec3]]
-		local quat_calc = portal_owner.worldRotation * sm.vec3.getRotation(sm.vec3.new(0, 0, 1), hit_normal) --[[@as Quat]]
+		local pos_calc = portal_owner.worldPosition + portal_owner.worldRotation * hit_pos
+		local quat_calc = portal_owner.worldRotation * sm.vec3.getRotation(sm.vec3.new(0, 0, 1), hit_normal)
 		area_trigger = sm.areaTrigger.createBox(sm.vec3.new(0.8, 0.8, 0.05), pos_calc, quat_calc, sm.areaTrigger.filter.all, { idx = (portal_idx % 2) + 1 })
 	else
 		local hit_quat = sm.vec3.getRotation(sm.vec3.new(0, 0, 1), hit_normal)
-		area_trigger = sm.areaTrigger.createBox(sm.vec3.new(0.8, 0.8, 0.05), hit_pos + hit_normal * 0.1 --[[@as Vec3]], hit_quat, sm.areaTrigger.filter.all, { idx = (portal_idx % 2) + 1 })
+		area_trigger = sm.areaTrigger.createBox(sm.vec3.new(0.8, 0.8, 0.05), hit_pos + hit_normal * 0.1, hit_quat, sm.areaTrigger.filter.all, { idx = (portal_idx % 2) + 1 })
 	end
 
 	area_trigger:bindOnProjectile("server_onTriggerProjectile")
