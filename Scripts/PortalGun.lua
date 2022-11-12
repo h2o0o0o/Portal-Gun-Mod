@@ -202,7 +202,7 @@ function PortalGun.loadAnimations( self )
 		jumpDispersionMultiplier = 2
 	}
 
-	self.fireCooldownTimer = 0.7
+	self.fireCooldownTimer = 0.0
 	self.spreadCooldownTimer = 0.0
 
 	self.movementDispersion = 0.0
