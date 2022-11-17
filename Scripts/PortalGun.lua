@@ -277,9 +277,11 @@ function PortalGun:client_onUpdate( dt )
 					if sm.exists(cur_portal_owner) then
 						local v_portal_pos = cur_portal_owner:getInterpolatedWorldPosition() + cur_portal_owner.velocity * dt
 
-						cur_portal:setWorldPosition(v_portal_pos + cur_portal_owner.worldRotation * v.localOffset --[[@as Vec3]])
+						cur_portal:setWorldPosition(v_portal_pos + cur_portal_owner.worldRotation * v.localOffset)
 						cur_portal:setWorldRotation(cur_portal_owner.worldRotation * sm.vec3.getRotation(sm.vec3.new(0, 0, 1), v.localNormal))
 					else
+						sm.effect.playEffect("Portanus - Close", cur_portal:getWorldPosition(), sm.vec3.zero(), cur_portal:getWorldRotation())
+
 						sm.areaTrigger.destroy(cur_portal)
 						self.client_portals[k] = nil
 					end
@@ -296,7 +298,7 @@ function PortalGun:client_onUpdate( dt )
 			local v_cur_portal = cur_portal_data.portal
 			if v_portal_owner and sm.exists(v_portal_owner) then
 				local v_portal_pos = v_portal_owner:getInterpolatedWorldPosition() + v_portal_owner.velocity * dt
-				v:setPosition(v_portal_pos + v_portal_owner.worldRotation * cur_portal_data.localOffset --[[@as Vec3]])
+				v:setPosition(v_portal_pos + v_portal_owner.worldRotation * cur_portal_data.localOffset)
 			else
 				v:setPosition(v_cur_portal:getWorldPosition())
 			end
@@ -321,8 +323,8 @@ function PortalGun:client_onUpdate( dt )
 	end
 
 	-- First person animation
-	local isSprinting =  self.tool:isSprinting()
-	local isCrouching =  self.tool:isCrouching()
+	local isSprinting = self.tool:isSprinting()
+	local isCrouching = self.tool:isCrouching()
 
 	if self.tool:isLocal() then
 		if self.equipped then
@@ -890,7 +892,7 @@ function PortalGun:server_onTriggerProjectile(owner, hit_pos, hit_time, hit_velo
 				if type(proj_owner) == "Shape" then
 					local v_global_pos = proj_owner:transformPoint(v_proj_pos)
 					local v_global_vel = proj_owner:transformDirection(v_proj_dir)
-		
+
 					sm.projectile.shapeProjectileAttack(proj_uuid, v_new_damage, v_global_pos, v_global_vel, proj_owner)
 				else
 					sm.projectile.projectileAttack(proj_uuid, v_new_damage, v_proj_pos, v_proj_dir, proj_owner)
@@ -912,8 +914,7 @@ local function client_spawnClosingPortalEffect(self, v, effect_name)
 		v_closing_effect:setRotation(v_owner.worldRotation * sm.vec3.getRotation(sm.vec3.new(0, 0, 1), v.localNormal))
 		v_closing_effect:start()
 
-		local v_new_idx = #self.cl_closing_portals + 1
-		self.cl_closing_portals[v_new_idx] = {
+		self.cl_closing_portals[#self.cl_closing_portals + 1] = {
 			effect = v_closing_effect,
 			owner = v.owner,
 			localOffset = v.localOffset,
