@@ -1,7 +1,7 @@
 {
    "allow_add_mods" : true,
    "custom_icons" : true,
-   "description" : "This portal gun can be used to teleport animals and farmbots. It can also be placed on any moving vehicle.\r\n\r\nBe sure to leave a like and add the mod to your favorites to support our work!\r\n[img]https://steamusercontent-a.akamaihd.net/ugc/2422250057103161085/A682E0A36F63D71A8E643AA7ACC710E907F8937C/[/img]",
+   "description" : "This portal gun can be used to teleport animals and farmbots. It can also be placed on any moving vehicle.\r\n\r\n[h1][b]Controls[/b][/h1]\r\n[list]\r\n[*] [b]LMB[/b] - Open the first portal\r\n[*] [b]RMB[/b] - Open the second portal\r\n[*] [b]R[/b] - Close both portals\r\n[/list]\r\n\r\n[h1][b]Credits[/b][/h1]\r\n[list]\r\n[*] [b][url=https://steamcommunity.com/profiles/76561198361178618]Questionable Mark[/url][/b] - Scripting, Portal Gun rig and effects\r\n[*] [b][url=https://steamcommunity.com/profiles/76561198352947320]H20[/url][/b] - Thumbnail, posters, Portal Gun model and textures for portals\r\n[*] [b][url=https://steamcommunity.com/profiles/76561198280635682]Driver[/url][/b] - Animations for Portal Gun\r\n[/list]\r\n\r\nBe sure to leave a like and add the mod to your favorites to support our work!\r\n[img]https://steamusercontent-a.akamaihd.net/ugc/2422250057103161085/A682E0A36F63D71A8E643AA7ACC710E907F8937C/[/img]",
    "fileId" : 2886179111,
    "localId" : "2c5d55e8-eab7-4596-95a3-c327f9e2b5d2",
    "name" : "Portal Gun",
