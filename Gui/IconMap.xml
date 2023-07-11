@@ -5,8 +5,14 @@
             <Index name="Empty">
                 <Frame point="0 0"/>
             </Index>
-            <Index name="ba3e1c6c-a8cd-4eaa-83c8-b7e95b333a22">
+            <Index name="d0bec57d-47a5-442a-a597-55702cd9d2e4">
                 <Frame point="0 0"/>
+            </Index>
+            <Index name="a439b4ec-03a9-4bba-aa50-ffa19765ed48">
+                <Frame point="96 0"/>
+            </Index>
+            <Index name="ba3e1c6c-a8cd-4eaa-83c8-b7e95b333a22">
+                <Frame point="0 96"/>
             </Index>
         </Group>
     </Resource>

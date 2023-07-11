@@ -1,3 +1,5 @@
 {
-	"shapeSetList": []
+	"shapeSetList": [
+		"$CONTENT_DATA/Objects/Database/ShapeSets/pg_materials.json"
+	]
 }

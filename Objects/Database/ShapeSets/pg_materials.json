@@ -1,0 +1,40 @@
+{
+	"partList": [
+		{
+			"uuid": "d0bec57d-47a5-442a-a597-55702cd9d2e4",
+			"name": "pg_ammo",
+			"renderable": "$CONTENT_DATA/Objects/Renderables/portal_gun_component_ammo.rend",
+			"color": "eeeeee",
+			"box": { "x": 1, "y": 1, "z": 1 },
+			"itemStack": {},
+			"rotationSet": "PropY",
+			"sticky": "-Y",
+			"physicsMaterial": "Glass",
+			"ratings": { "density": 1, "durability": 1, "friction": 4, "buoyancy": 6 },
+			"scripted": { "filename": "$MOD_DATA/Scripts/ExplosiveBomb.lua", "classname": "ExplosiveBomb" },
+			"qualityLevel": 1,
+			"flammable": true,
+			"consumable": true,
+			"stackSize": 1,
+			"showInInventory": false
+		},
+		{
+			"uuid": "a439b4ec-03a9-4bba-aa50-ffa19765ed48",
+			"name": "pg_base",
+			"renderable": "$CONTENT_DATA/Objects/Renderables/portal_gun_component_base.rend",
+			"color": "eeeeee",
+			"box": { "x": 3, "y": 1, "z": 1 },
+			"itemStack": {},
+			"rotationSet": "PropYZm",
+			"sticky": "+Y-Y-Z",
+			"physicsMaterial": "Metal",
+			"ratings": { "density": 1, "durability": 5, "friction": 4, "buoyancy": 6 },
+			"scripted": {"filename": "$MOD_DATA/Scripts/ExplosiveBomb.lua", "classname": "ExplosiveBomb"},
+			"qualityLevel": 20,
+			"flammable": true,
+			"consumable": true,
+			"stackSize": 1,
+			"showInInventory": false
+		}
+	]
+}

@@ -1,0 +1,25 @@
+{
+	"lodList": [
+		{
+			"mesh": "$CONTENT_DATA/Objects/Mesh/portal_gun_component_ammo.obj",
+			"subMeshList": [
+				{
+					"material": "Glass",
+					"textureList": [
+						"$CONTENT_DATA/Tools/Textures/glass_dif.png",
+						"$GAME_DATA/Textures/Default/default_asg.tga",
+						"$GAME_DATA/Textures/Default/default_nor.tga"
+					]
+				},
+				{
+					"material": "DifAsgNor",
+					"textureList": [
+						"$CONTENT_DATA/Tools/Textures/portal_gun_dif.png",
+						"$CONTENT_DATA/Tools/Textures/portal_gun_asg.png",
+						"$CONTENT_DATA/Tools/Textures/portal_gun_nor.png"
+					]
+				}
+			]
+		}
+	]
+}
