@@ -1,0 +1,63 @@
+[
+	{
+		"itemId": "ba3e1c6c-a8cd-4eaa-83c8-b7e95b333a22", //portanus
+		"quantity": 1,
+		"craftTime": 117,
+		"ingredientList": [
+			{
+				"quantity": 1,
+				"itemId": "d0bec57d-47a5-442a-a597-55702cd9d2e4" // pg component ammo
+			},
+			{
+				"quantity": 1,
+				"itemId": "a439b4ec-03a9-4bba-aa50-ffa19765ed48" // pg component base
+			}
+		]
+	},
+	{
+		"itemId": "d0bec57d-47a5-442a-a597-55702cd9d2e4", //pg component ammo
+		"quantity": 1,
+		"craftTime": 57,
+		"ingredientList": [
+			{
+				"quantity": 1,
+				"itemId": "97f449b6-c948-448b-b8b3-4448e3f6b956" // vacuum pump
+			},
+			{
+				"quantity": 3,
+				"itemId": "9b8f2abd-265c-4750-b8b9-fe6cb564633c" // vacuum pipe
+			},
+			{
+				"quantity": 4,
+				"itemId": "1016cafc-9f6b-40c9-8713-9019d399783f" // metal block 2
+			},
+			{
+				"quantity": 4,
+				"itemId": "36335664-6e61-4d44-9876-54f9660a8565" // glue
+			}
+		]
+	},
+	{
+		"itemId": "a439b4ec-03a9-4bba-aa50-ffa19765ed48", //pg component base
+		"quantity": 1,
+		"craftTime": 57,
+		"ingredientList": [
+			{
+				"quantity": 15,
+				"itemId": "5530e6a0-4748-4926-b134-50ca9ecb9dcf" // component kit
+			},
+			{
+				"quantity": 5,
+				"itemId": "f152e4df-bc40-44fb-8d20-3b3ff70cdfe3" // circuit board
+			},
+			{
+				"quantity": 4,
+				"itemId": "9f0f56e8-2c31-4d83-996c-d00a9b296c3f" // logic gate
+			},
+			{
+				"quantity": 3,
+				"itemId": "c0dfdea5-a39d-433a-b94a-299345a5df46" // metal block 3
+			}
+		]
+	}
+]
