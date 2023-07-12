@@ -59,5 +59,30 @@
 				"itemId": "c0dfdea5-a39d-433a-b94a-299345a5df46" // metal block 3
 			}
 		]
+	},
+
+
+	{
+		"itemId": "0166f03e-4012-46f0-92d3-39202e867991", //consumable portal ammo
+		"quantity": 10,
+		"craftTime": 27,
+		"ingredientList": [
+			{
+				"quantity": 10,
+				"itemId": "1147e59d-6940-42b4-840b-07f05054f5e0" // crude oil
+			},
+			{
+				"quantity": 2,
+				"itemId": "36335664-6e61-4d44-9876-54f9660a8565" // glue
+			},
+			{
+				"quantity": 2,
+				"itemId": "c9396a42-67c3-4fa3-b682-31428ff9eced" // pigment flower
+			},
+			{
+				"quantity": 1,
+				"itemId": "388adeab-67e5-4901-afe8-c56217754510" // glow
+			}
+		]
 	}
 ]

@@ -2,7 +2,7 @@
 	"partList": [
 		{
 			"uuid": "d0bec57d-47a5-442a-a597-55702cd9d2e4",
-			"name": "pg_ammo",
+			"name": "pg_bottle",
 			"renderable": "$CONTENT_DATA/Objects/Renderables/portal_gun_component_ammo.rend",
 			"color": "eeeeee",
 			"box": { "x": 1, "y": 1, "z": 1 },
@@ -11,7 +11,6 @@
 			"sticky": "-Y",
 			"physicsMaterial": "Glass",
 			"ratings": { "density": 1, "durability": 1, "friction": 4, "buoyancy": 6 },
-			"scripted": { "filename": "$MOD_DATA/Scripts/ExplosiveBomb.lua", "classname": "ExplosiveBomb" },
 			"qualityLevel": 1,
 			"flammable": true,
 			"consumable": true,
@@ -29,7 +28,6 @@
 			"sticky": "+Y-Y-Z",
 			"physicsMaterial": "Metal",
 			"ratings": { "density": 1, "durability": 5, "friction": 4, "buoyancy": 6 },
-			"scripted": {"filename": "$MOD_DATA/Scripts/ExplosiveBomb.lua", "classname": "ExplosiveBomb"},
 			"qualityLevel": 20,
 			"flammable": true,
 			"consumable": true,

@@ -1,5 +1,6 @@
 {
 	"shapeSetList": [
-		"$CONTENT_DATA/Objects/Database/ShapeSets/pg_materials.json"
+		"$CONTENT_DATA/Objects/Database/ShapeSets/pg_materials.json",
+		"$CONTENT_DATA/Objects/Database/ShapeSets/pg_ammo.json"
 	]
 }

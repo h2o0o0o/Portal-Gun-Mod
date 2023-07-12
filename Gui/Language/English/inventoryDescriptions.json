@@ -2,5 +2,17 @@
 	"ba3e1c6c-a8cd-4eaa-83c8-b7e95b333a22": {
 		"title": "Portal Gun",
 		"description": "#ffffffA portal gun to flex on em' all\n\nControls:\n #ffff00LMB#ffffff - Spawn portal 1\n #ffff00RMB#ffffff - Spawn portal 2\n #ffff00R#ffffff - Remove portals"
+	},
+	"d0bec57d-47a5-442a-a597-55702cd9d2e4": {
+		"title": "Portal Gun Capsule",
+		"description": "#ffffffUsed in a crafting recipe of a portal gun."
+	},
+	"a439b4ec-03a9-4bba-aa50-ffa19765ed48": {
+		"title": "Portal Gun Base",
+		"description": "#ffffffUsed in a crafting recipe of a portal gun."
+	},
+	"0166f03e-4012-46f0-92d3-39202e867991": {
+		"title": "Portal Gun Ammo",
+		"description": "#ffffffAmmo for the Portal Gun"
 	}
 }

@@ -564,7 +564,6 @@ function PortalGun:server_onFixedUpdate(dt)
 end
 
 function PortalGun.client_onEquip( self, animate )
-
 	if animate then
 		sm.audio.play( "PotatoRifle - Equip", self.tool:getPosition() )
 	end
@@ -829,16 +828,23 @@ function PortalGun:server_onTriggerStay(owner, data)
 				local v_final_offset = v_other_portal_normal * (v_up_offset + v_radius_offset)
 				v:setWorldPosition(v_other_portal:getWorldPosition() + v_final_offset)
 
+				local v_shape_velocity = sm.vec3.zero()
+				if v_self_owner then
+					v_shape_velocity = v_self_owner.velocity
+				end
+
 				if v:isTumbling() then
 					local v_vel = v:getTumblingLinearVelocity()
+					local v_vel_difference = (v_vel - v_shape_velocity):length()
 
 					v:applyTumblingImpulse(v_vel * -v.mass)
-					v:applyTumblingImpulse(v_other_portal_normal * v_vel:length() * v.mass)
+					v:applyTumblingImpulse(v_other_portal_normal * v_vel_difference * v.mass)
 				else
 					local v_vel = v.velocity
+					local v_vel_difference = (v_vel - v_shape_velocity):length()
 
 					sm.physics.applyImpulse(v --[[@as Character]], v_vel * -v.mass, true)
-					sm.physics.applyImpulse(v --[[@as Character]], v_other_portal_normal * v_vel:length() * v.mass, true)
+					sm.physics.applyImpulse(v --[[@as Character]], v_other_portal_normal * v_vel_difference * v.mass, true)
 				end
 			end
 		elseif v_type_str == "Body" then
@@ -980,6 +986,8 @@ function PortalGun:client_onPortalSpawn(data)
 	self.client_enter_timers[portal_idx] = 1.5
 end
 
+local pg_portal_gun_ammo = sm.uuid.new("0166f03e-4012-46f0-92d3-39202e867991")
+
 function PortalGun:server_createPortal(data)
 	local portal_idx   = data[1]
 	local hit_pos      = data[2] --[[@as Vec3]]
@@ -988,6 +996,23 @@ function PortalGun:server_createPortal(data)
 
 	if portal_owner and not sm.exists(portal_owner) then
 		return
+	end
+
+	if sm.game.getLimitedInventory() and sm.game.getEnableAmmoConsumption() then
+		local v_tool_owner = self.tool:getOwner()
+		if not (v_tool_owner and sm.exists(v_tool_owner)) then
+			return
+		end
+
+		local v_inventory = v_tool_owner:getInventory()
+		local v_available_ammo = sm.container.totalQuantity(v_inventory, pg_portal_gun_ammo)
+		if v_available_ammo == 0 then
+			return
+		end
+
+		sm.container.beginTransaction()
+		sm.container.spend(v_inventory, pg_portal_gun_ammo, 1, false)
+		sm.container.endTransaction()
 	end
 
 	local area_trigger = nil
@@ -1035,6 +1060,14 @@ local function place_portal_client_internal(self, portal_index)
 	local r_type = result.type
 	if g_allowed_placement_types[r_type] == nil then
 		return false
+	end
+
+	if sm.game.getLimitedInventory() and sm.game.getEnableAmmoConsumption() then
+		local v_inventory = sm.localPlayer.getInventory()
+		local v_available_ammo = sm.container.totalQuantity(v_inventory, pg_portal_gun_ammo)
+		if v_available_ammo == 0 then
+			return false
+		end
 	end
 
 	local v_portal_pos = result.pointWorld

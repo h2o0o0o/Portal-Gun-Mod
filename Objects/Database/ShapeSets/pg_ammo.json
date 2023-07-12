@@ -1,0 +1,21 @@
+{
+    "partList": [
+        {
+			"uuid": "0166f03e-4012-46f0-92d3-39202e867991",
+			"name": "pg_consumable_ammo",
+			"renderable": "$CONTENT_DATA/Objects/Renderables/portal_gun_component_base.rend",
+			"color": "eeeeee",
+			"box": { "x": 3, "y": 1, "z": 1 },
+			"itemStack": {},
+			"rotationSet": "PropYZm",
+			"sticky": "+Y-Y-Z",
+			"physicsMaterial": "Metal",
+			"ratings": { "density": 1, "durability": 5, "friction": 4, "buoyancy": 6 },
+			"qualityLevel": 5,
+			"flammable": true,
+			"consumable": true,
+			"stackSize": 20,
+			"showInInventory": false
+		}
+    ]
+}
