@@ -1,0 +1,29 @@
+{
+   "lodList" : [
+      {
+         "mesh" : "$CONTENT_DATA/Objects/Mesh/portal_gun_liquid.obj",
+         "subMeshList" : [
+            {
+               "material" : "DifAsgNor",
+               "textureList" : [
+                  "$CONTENT_DATA/Objects/Textures/portal_liquid_base_dif.png",
+                  "$GAME_DATA/Textures/Default/default_asg.tga",
+                  "$CONTENT_DATA/Objects/Textures/portal_liquid_base_nor.png"
+               ]
+            },
+            {
+               "material" : "Dif",
+               "textureList" : [ "$CONTENT_DATA/Objects/Textures/portal_liquid_dif.png", "", "" ]
+            },
+            {
+               "material" : "Glass",
+               "textureList" : [
+                  "$CONTENT_DATA/Tools/Textures/liquid_color_dif.png",
+                  "$GAME_DATA/Textures/Default/default_asg.tga",
+                  "$GAME_DATA/Textures/Default/default_nor.tga"
+               ]
+            }
+         ]
+      }
+   ]
+}

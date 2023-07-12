@@ -31,6 +31,7 @@ dofile( "$SURVIVAL_DATA/Scripts/game/survival_projectiles.lua" )
 ---@field cl_cached_shapes boolean[]
 ---@field cl_closing_portals ClosingPortalData[]
 PortalGun = class()
+PortalGun.max_portal_count = 2
 
 local renderables = { "$CONTENT_DATA/Tools/Renderables/portalgun_model.rend" }
 local renderablesTp = { "$GAME_DATA/Character/Char_Male/Animations/char_male_tp_connecttool.rend", "$CONTENT_DATA/Tools/Renderables/portalgun_tp_offset.rend" }
@@ -55,6 +56,28 @@ function PortalGun:server_requestPortals(data, caller)
 	end
 end
 
+function PortalGun:server_onCreate()
+	self.portals = {}
+	self.cooldown_data = {}
+
+	self.sv_portal_ammo = self.storage:load() or 0
+end
+
+function PortalGun:server_saveAmmo()
+	self.storage:save(self.sv_portal_ammo)
+	print("ammo saved", self.sv_portal_ammo)
+end
+
+function PortalGun:server_requestAmmo(data, caller)
+	self.network:sendToClient(caller, "client_receiveAmmo", self.sv_portal_ammo)
+end
+
+function PortalGun:client_receiveAmmo(ammo_count)
+	self.cl_portal_ammo = ammo_count
+	self.cl_waiting = nil
+	print("receive ammo", self.cl_portal_ammo)
+end
+
 function PortalGun:client_onCreate()
 	if not self.tool:isLocal() then
 		self.network:sendToServer("server_requestPortals")
@@ -73,6 +96,11 @@ function PortalGun:client_onCreate()
 	self.client_enter_timers = {}
 	self.cl_cached_shapes = {}
 	self.cl_closing_portals = {}
+
+	self.cl_portal_ammo = 0
+	self.cl_waiting = true
+
+	self.network:sendToServer("server_requestAmmo")
 end
 
 function PortalGun:client_onDestroy()
@@ -100,11 +128,6 @@ function PortalGun:client_onDestroy()
 			end
 		end
 	end
-end
-
-function PortalGun:server_onCreate()
-	self.portals = {}
-	self.cooldown_data = {}
 end
 
 function PortalGun:server_onDestroy()
@@ -351,12 +374,6 @@ function PortalGun:client_onUpdate( dt )
 	local effectPos, rot
 
 	if self.tool:isLocal() then
-
-		local zOffset = 0.6
-		if self.tool:isCrouching() then
-			zOffset = 0.29
-		end
-
 		local dir = sm.localPlayer.getDirection()
 		local firePos = self.tool:getFpBonePos( "jnt_portalgun_shoot" )
 
@@ -599,7 +616,6 @@ function PortalGun.client_onEquip( self, animate )
 end
 
 function PortalGun.client_onUnequip( self, animate )
-
 	self.wantEquipped = false
 	self.equipped = false
 	self.aiming = false
@@ -999,20 +1015,29 @@ function PortalGun:server_createPortal(data)
 	end
 
 	if sm.game.getLimitedInventory() and sm.game.getEnableAmmoConsumption() then
-		local v_tool_owner = self.tool:getOwner()
-		if not (v_tool_owner and sm.exists(v_tool_owner)) then
-			return
-		end
+		if self.sv_portal_ammo > 0 then
+			self.sv_portal_ammo = self.sv_portal_ammo - 1
+			self:server_saveAmmo()
+		else
+			local v_tool_owner = self.tool:getOwner()
+			if not (v_tool_owner and sm.exists(v_tool_owner)) then
+				return
+			end
 
-		local v_inventory = v_tool_owner:getInventory()
-		local v_available_ammo = sm.container.totalQuantity(v_inventory, pg_portal_gun_ammo)
-		if v_available_ammo == 0 then
-			return
-		end
+			local v_inventory = v_tool_owner:getInventory()
+			local v_available_ammo = sm.container.totalQuantity(v_inventory, pg_portal_gun_ammo)
+			if v_available_ammo == 0 then
+				return
+			end
 
-		sm.container.beginTransaction()
-		sm.container.spend(v_inventory, pg_portal_gun_ammo, 1, false)
-		sm.container.endTransaction()
+			self.sv_portal_ammo = self.max_portal_count - 1
+			self.network:sendToClient(v_tool_owner, "client_receiveAmmo", self.sv_portal_ammo)
+			self:server_saveAmmo()
+
+			sm.container.beginTransaction()
+			sm.container.spend(v_inventory, pg_portal_gun_ammo, 1, false)
+			sm.container.endTransaction()
+		end
 	end
 
 	local area_trigger = nil
@@ -1063,10 +1088,14 @@ local function place_portal_client_internal(self, portal_index)
 	end
 
 	if sm.game.getLimitedInventory() and sm.game.getEnableAmmoConsumption() then
-		local v_inventory = sm.localPlayer.getInventory()
-		local v_available_ammo = sm.container.totalQuantity(v_inventory, pg_portal_gun_ammo)
-		if v_available_ammo == 0 then
-			return false
+		if self.cl_portal_ammo == 0 then
+			local v_inventory = sm.localPlayer.getInventory()
+			local v_available_ammo = sm.container.totalQuantity(v_inventory, pg_portal_gun_ammo)
+			if v_available_ammo == 0 then
+				return false
+			end
+		else
+			self.cl_portal_ammo = self.cl_portal_ammo - 1
 		end
 	end
 
@@ -1153,6 +1182,10 @@ function PortalGun:server_portalCleanup()
 end
 
 function PortalGun:client_onReload()
+	if self.cl_waiting then
+		return true
+	end
+
 	self.network:sendToServer("server_portalCleanup")
 	self:client_removePortals(true)
 	return true
@@ -1171,6 +1204,10 @@ function PortalGun.cl_onSecondaryUse( self, state )
 end
 
 function PortalGun.client_onEquippedUpdate( self, primaryState, secondaryState )
+	if self.cl_waiting then
+		return true, true
+	end
+
 	if primaryState ~= self.prevPrimaryState then
 		self:cl_onPrimaryUse( primaryState )
 		self.prevPrimaryState = primaryState
