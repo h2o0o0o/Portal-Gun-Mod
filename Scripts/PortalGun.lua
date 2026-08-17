@@ -33,6 +33,49 @@ dofile( "$SURVIVAL_DATA/Scripts/game/survival_projectiles.lua" )
 PortalGun = class()
 PortalGun.max_portal_count = 2
 
+local PortanusGuiData = {}
+PortanusGuiData.root = {
+	Anchor = "Center",
+	Childs = {
+		{
+			Childs = {},
+			ImageTexture = "$CONTENT_2c5d55e8-eab7-4596-95a3-c327f9e2b5d2/Gui/Textures/portal_left.png",
+			Name = "PortalLeftIcon",
+			NeedKey = false,
+			NeedMouse = false,
+			Skin = "ImageBox",
+			Type = "ImageBox",
+			height = 80,
+			width = 80,
+			x = 0,
+			y = 0
+		},
+		{
+			Childs = {},
+			ImageTexture = "$CONTENT_2c5d55e8-eab7-4596-95a3-c327f9e2b5d2/Gui/Textures/portal_right.png",
+			Name = "PortalRightIcon",
+			NeedKey = false,
+			NeedMouse = false,
+			Skin = "ImageBox",
+			Type = "ImageBox",
+			height = 80,
+			width = 80,
+			x = 0,
+			y = 0
+		}
+	},
+	Skin = "PanelEmpty",
+	Type = "Widget",
+	Name = "BackPanel",
+	width = 160,
+	height = 80,
+	NeedKey = false,
+	NeedMouse = false,
+	x = 0,
+	y = 0
+}
+PortanusGuiData.index = IndexWidgets( PortanusGuiData.root )
+
 local renderables = { "$CONTENT_DATA/Tools/Renderables/portalgun_model.rend" }
 local renderablesTp = { "$GAME_DATA/Character/Char_Male/Animations/char_male_tp_connecttool.rend", "$CONTENT_DATA/Tools/Renderables/portalgun_tp_offset.rend" }
 local renderablesFp = { "$CONTENT_DATA/Tools/Renderables/portalgun_tp_offset.rend", "$CONTENT_DATA/Tools/Renderables/portalgun_fp_anim.rend" }
@@ -79,6 +122,8 @@ function PortalGun:client_receiveAmmo(ammo_count)
 end
 
 function PortalGun:client_onCreate()
+	self.portanusGui = sm.jsonGui.createGui({ isHud = true, isInteractive = false, needsCursor = false })
+
 	if not self.tool:isLocal() then
 		self.network:sendToServer("server_requestPortals")
 	end
@@ -127,6 +172,10 @@ function PortalGun:client_onDestroy()
 				v_eff:destroy()
 			end
 		end
+	end
+
+	if self.portanusGui then
+		self.portanusGui:close()
 	end
 end
 
@@ -264,6 +313,19 @@ local portal_color2 = sm.color.new(0x00cc58ff)
 local portal_color_vec1 = sm.vec3.new(portal_color1.r, portal_color1.g, portal_color1.b)
 local portal_color_vec2 = sm.vec3.new(portal_color2.r, portal_color2.g, portal_color2.b)
 function PortalGun:client_onUpdate( dt )
+	if self.tool:isEquipped() and self.tool:isLocal() then
+		local screenWidth, screenHeight = sm.jsonGui.getViewSize()
+		PortanusGuiData.root.x = math.floor( (-screenWidth + PortanusGuiData.root.width) * 0.15 )
+		PortanusGuiData.root.y = math.floor( (-screenHeight + PortanusGuiData.root.height) * 0.4820 )
+		--PortanusGuiData.root.x = math.floor( -screenWidth * 0 - PortanusGuiData.root.width )
+		--PortanusGuiData.root.x = math.floor( (-screenWidth + PortanusGuiData.root.width) * 0.5 )
+
+		PortanusGuiData.index["PortalLeftIcon"].Visible = self.client_portals[1] ~= nil
+		PortanusGuiData.index["PortalRightIcon"].Visible = self.client_portals[2] ~= nil
+
+		self.portanusGui:render(PortanusGuiData.root)
+	end
+
 	for k, v in pairs(self.cl_closing_portals) do
 		local v_cur_effect = v.effect
 		if v_cur_effect:isPlaying() then
