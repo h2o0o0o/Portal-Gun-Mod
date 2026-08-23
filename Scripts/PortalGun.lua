@@ -308,22 +308,41 @@ local function find_right_vector(vector)
     return sm.vec3.new(math.cos(yaw), math.sin(yaw), 0)
 end
 
+local function updateIndicatorData(value, enabled, dt)
+	if enabled then
+		return math.min( (value or 0) + dt * 3.0, 1.0 )
+	else
+		return math.max( (value or 0) - dt * 2.0, 0.0 )
+	end
+end
+
 local portal_color1 = sm.color.new(0x32a865ff)
 local portal_color2 = sm.color.new(0x00cc58ff)
 local portal_color_vec1 = sm.vec3.new(portal_color1.r, portal_color1.g, portal_color1.b)
 local portal_color_vec2 = sm.vec3.new(portal_color2.r, portal_color2.g, portal_color2.b)
 function PortalGun:client_onUpdate( dt )
 	if self.tool:isEquipped() and self.tool:isLocal() then
-		local screenWidth, screenHeight = sm.jsonGui.getViewSize()
-		PortanusGuiData.root.x = math.floor( (-screenWidth + PortanusGuiData.root.width) * 0.15 )
-		PortanusGuiData.root.y = math.floor( (-screenHeight + PortanusGuiData.root.height) * 0.4820 )
-		--PortanusGuiData.root.x = math.floor( -screenWidth * 0 - PortanusGuiData.root.width )
-		--PortanusGuiData.root.x = math.floor( (-screenWidth + PortanusGuiData.root.width) * 0.5 )
+		self.indicatorAlpha = math.min( (self.indicatorAlpha or 0) + dt * 2.0, 1.0 )
+		self.leftIndicatorAlpha = updateIndicatorData(self.leftIndicatorAlpha, self.client_portals[1] ~= nil, dt)
+		self.rightIndicatorAlpha = updateIndicatorData(self.rightIndicatorAlpha, self.client_portals[2] ~= nil, dt)
 
-		PortanusGuiData.index["PortalLeftIcon"].Visible = self.client_portals[1] ~= nil
-		PortanusGuiData.index["PortalRightIcon"].Visible = self.client_portals[2] ~= nil
+		local screenWidth, screenHeight = sm.jsonGui.getViewSize()
+		PortanusGuiData.root.x = math.floor( (-screenWidth + PortanusGuiData.root.width) * 0.5 )
+		PortanusGuiData.root.y = math.floor( (-screenHeight + PortanusGuiData.root.height) * 0.5 )
+		--CENTERED ICON CODE
+		--PortanusGuiData.root.x = math.floor( PortanusGuiData.root.width * 0.25 )
+		--PortanusGuiData.root.y = 0
+
+		PortanusGuiData.index["PortalLeftIcon"].Visible = true
+		PortanusGuiData.index["PortalLeftIcon"].Alpha = self.leftIndicatorAlpha * self.indicatorAlpha
+		PortanusGuiData.index["PortalRightIcon"].Visible = true
+		PortanusGuiData.index["PortalRightIcon"].Alpha = self.rightIndicatorAlpha * self.indicatorAlpha
 
 		self.portanusGui:render(PortanusGuiData.root)
+	else
+		if self.portanusGui:isActive() then
+			self.portanusGui:close()
+		end
 	end
 
 	for k, v in pairs(self.cl_closing_portals) do
