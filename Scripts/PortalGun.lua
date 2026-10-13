@@ -3,6 +3,18 @@ dofile( "$SURVIVAL_DATA/Scripts/util.lua" )
 dofile( "$SURVIVAL_DATA/Scripts/game/survival_shapes.lua" )
 dofile( "$SURVIVAL_DATA/Scripts/game/survival_projectiles.lua" )
 
+---@class IconAnimationStateBase
+---@field interruptable boolean
+---@field ratio integer -- a value from 0 to 1 which is then converted to [minFrame;maxFrame]
+---@field duration integer
+---@field maxFrame integer
+---@field minFrame integer
+---@field frameName string
+---@field nextState integer
+
+---@class IconAnimationState : IconAnimationStateBase
+---@field currState integer
+
 ---@class PortalData
 ---@field portal AreaTrigger
 ---@field localOffset Vec3
@@ -30,8 +42,42 @@ dofile( "$SURVIVAL_DATA/Scripts/game/survival_projectiles.lua" )
 ---@field client_portals PortalData[]
 ---@field cl_cached_shapes boolean[]
 ---@field cl_closing_portals ClosingPortalData[]
+---@field leftIndicatorState IconAnimationState
+---@field rightIndicatorState IconAnimationState
 PortalGun = class()
 PortalGun.max_portal_count = 2
+
+local GUI_ANIM_STATE_OPEN = 1
+local GUI_ANIM_STATE_IDLE = 2
+local GUI_ANIM_STATE_POP = 3
+
+local GUI_ANIM_STATES =
+{
+	[GUI_ANIM_STATE_OPEN] = {
+		duration = 0.53,
+		maxFrame = 32,
+		minFrame = 0,
+		frameName = "$CONTENT_2c5d55e8-eab7-4596-95a3-c327f9e2b5d2/Gui/%s_OPEN/%s_%03d.png",
+		nextState = 2,
+		interruptable = false
+	},
+	[GUI_ANIM_STATE_IDLE] = {
+		duration = 3,
+		maxFrame = 179,
+		minFrame = 0,
+		frameName = "$CONTENT_2c5d55e8-eab7-4596-95a3-c327f9e2b5d2/Gui/IDLE_%s/IDLE_%s_%03d.png",
+		nextState = 2,
+		interruptable = true
+	},
+	[GUI_ANIM_STATE_POP] = {
+		duration = 0.15,
+		maxFrame = 8,
+		minFrame = 0,
+		frameName = "$CONTENT_2c5d55e8-eab7-4596-95a3-c327f9e2b5d2/Gui/POP_%s/POP_%s_%03d.png",
+		nextState = nil,
+		interruptable = false
+	}
+}
 
 local PortanusGuiData = {}
 PortanusGuiData.root = {
@@ -123,6 +169,9 @@ end
 
 function PortalGun:client_onCreate()
 	self.portanusGui = sm.jsonGui.createGui({ isHud = true, isInteractive = false, needsCursor = false })
+
+	self.leftIndicatorState = { currState = nil }
+	self.rightIndicatorState = { currState = nil }
 
 	if not self.tool:isLocal() then
 		self.network:sendToServer("server_requestPortals")
@@ -316,30 +365,85 @@ local function updateIndicatorData(value, enabled, dt)
 	end
 end
 
+---@param state IconAnimationState
+---@param newStateIdx number
+local function setIndicatorState(state, newStateIdx)
+	local newState = GUI_ANIM_STATES[newStateIdx]
+
+	state.currState = newStateIdx
+	state.ratio = 0
+	state.duration = newState.duration
+	state.minFrame = newState.minFrame
+	state.maxFrame = newState.maxFrame
+	state.frameName = newState.frameName
+	state.nextState = newState.nextState
+	state.interruptable = newState.interruptable
+end
+
+local function resetIndicatorState(state)
+	state.currState = nil
+end
+
+---@param state IconAnimationState
+---@param dt integer
+local function updateIndicatorState(state, isEnabled, dt)
+	if isEnabled then
+		if state.currState == nil then
+			print("SET THE STATE")
+			setIndicatorState(state, 1)
+		end
+	else		
+		--resetIndicatorState(state)
+		--return
+	end
+
+	if state.currState ~= nil then
+		if state.ratio < state.duration then
+			state.ratio = math.min( state.ratio + dt, state.duration )
+		else
+			if state.nextState ~= nil then
+				print("STATE RESET")
+				setIndicatorState(state, state.nextState)
+			else
+				resetIndicatorState(state)
+			end
+		end
+	end
+end
+
 local portal_color1 = sm.color.new(0x32a865ff)
 local portal_color2 = sm.color.new(0x00cc58ff)
 local portal_color_vec1 = sm.vec3.new(portal_color1.r, portal_color1.g, portal_color1.b)
 local portal_color_vec2 = sm.vec3.new(portal_color2.r, portal_color2.g, portal_color2.b)
 function PortalGun:client_onUpdate( dt )
 	if self.tool:isEquipped() and self.tool:isLocal() then
-		self.indicatorAlpha = math.min( (self.indicatorAlpha or 0) + dt * 2.0, 1.0 )
-		self.leftIndicatorAlpha = updateIndicatorData(self.leftIndicatorAlpha, self.client_portals[1] ~= nil, dt)
-		self.rightIndicatorAlpha = updateIndicatorData(self.rightIndicatorAlpha, self.client_portals[2] ~= nil, dt)
+		--self.indicatorAlpha = math.min( (self.indicatorAlpha or 0) + dt * 2.0, 1.0 )
+		updateIndicatorState(self.leftIndicatorState, self.client_portals[1] ~= nil, dt)
+		updateIndicatorState(self.rightIndicatorState, self.client_portals[2] ~= nil, dt)
 
 		local screenWidth, screenHeight = sm.jsonGui.getViewSize()
-		PortanusGuiData.root.x = math.floor( (-screenWidth + PortanusGuiData.root.width) * 0.5 )
-		PortanusGuiData.root.y = math.floor( (-screenHeight + PortanusGuiData.root.height) * 0.5 )
+		--PortanusGuiData.root.x = math.floor( (-screenWidth + PortanusGuiData.root.width) * 0.5 )
+		--PortanusGuiData.root.y = math.floor( (-screenHeight + PortanusGuiData.root.height) * 0.5 )
 		--CENTERED ICON CODE
-		--PortanusGuiData.root.x = math.floor( PortanusGuiData.root.width * 0.25 )
-		--PortanusGuiData.root.y = 0
+		PortanusGuiData.root.x = math.floor( PortanusGuiData.root.width * 0.25 )
+		PortanusGuiData.root.y = 0
 
-		PortanusGuiData.index["PortalLeftIcon"].Visible = true
-		PortanusGuiData.index["PortalLeftIcon"].Alpha = self.leftIndicatorAlpha * self.indicatorAlpha
-		PortanusGuiData.index["PortalRightIcon"].Visible = true
-		PortanusGuiData.index["PortalRightIcon"].Alpha = self.rightIndicatorAlpha * self.indicatorAlpha
+		if self.leftIndicatorState.currState ~= nil then
+			PortanusGuiData.index["PortalLeftIcon"].ImageTexture = self.leftIndicatorState.frameName:format("LMB", "LMB", sm.util.lerp(self.leftIndicatorState.minFrame, self.leftIndicatorState.maxFrame, self.leftIndicatorState.ratio / self.leftIndicatorState.duration))
+		end
+
+		if self.rightIndicatorState.currState ~= nil then
+			PortanusGuiData.index["PortalRightIcon"].ImageTexture = self.rightIndicatorState.frameName:format("RMB", "RMB", sm.util.lerp(self.rightIndicatorState.minFrame, self.rightIndicatorState.maxFrame, self.rightIndicatorState.ratio / self.rightIndicatorState.duration))
+		end
+
+		PortanusGuiData.index["PortalLeftIcon"].Visible = self.leftIndicatorState.currState ~= nil
+		PortanusGuiData.index["PortalRightIcon"].Visible = self.rightIndicatorState.currState ~= nil
 
 		self.portanusGui:render(PortanusGuiData.root)
 	else
+		self.leftIndicatorState.currState = nil
+		self.rightIndicatorState.currState = nil
+		--self.indicatorAlpha = 0
 		if self.portanusGui:isActive() then
 			self.portanusGui:close()
 		end
@@ -834,6 +938,10 @@ function PortalGun:client_onTriggerProjectile(owner, hit_pos, hit_time, hit_velo
 end
 
 local function client_onTriggerStayInternal(self, owner, data, character_allowed)
+	if not sm.exists(owner) then
+		return
+	end
+
 	local v_other_idx = owner:getUserData().idx
 	local v_other_portal_data = self.client_portals[v_other_idx]
 	if not v_other_portal_data then return end
@@ -1265,6 +1373,14 @@ end
 function PortalGun:client_onReload()
 	if self.cl_waiting then
 		return true
+	end
+
+	if self.leftIndicatorState.currState == GUI_ANIM_STATE_IDLE then
+		setIndicatorState(self.leftIndicatorState, GUI_ANIM_STATE_POP)
+	end
+
+	if self.rightIndicatorState.currState == GUI_ANIM_STATE_IDLE then
+		setIndicatorState(self.rightIndicatorState, GUI_ANIM_STATE_POP)
 	end
 
 	self.network:sendToServer("server_portalCleanup")
