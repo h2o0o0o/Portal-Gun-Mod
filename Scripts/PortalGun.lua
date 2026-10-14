@@ -58,7 +58,7 @@ local GUI_ANIM_STATES =
 		maxFrame = 32,
 		minFrame = 0,
 		frameName = "$CONTENT_2c5d55e8-eab7-4596-95a3-c327f9e2b5d2/Gui/%s_OPEN/%s_%03d.png",
-		nextState = 2,
+		nextState = GUI_ANIM_STATE_IDLE,
 		interruptable = false
 	},
 	[GUI_ANIM_STATE_IDLE] = {
@@ -66,7 +66,7 @@ local GUI_ANIM_STATES =
 		maxFrame = 179,
 		minFrame = 0,
 		frameName = "$CONTENT_2c5d55e8-eab7-4596-95a3-c327f9e2b5d2/Gui/IDLE_%s/IDLE_%s_%03d.png",
-		nextState = 2,
+		nextState = GUI_ANIM_STATE_IDLE,
 		interruptable = true
 	},
 	[GUI_ANIM_STATE_POP] = {
@@ -357,14 +357,6 @@ local function find_right_vector(vector)
     return sm.vec3.new(math.cos(yaw), math.sin(yaw), 0)
 end
 
-local function updateIndicatorData(value, enabled, dt)
-	if enabled then
-		return math.min( (value or 0) + dt * 3.0, 1.0 )
-	else
-		return math.max( (value or 0) - dt * 2.0, 0.0 )
-	end
-end
-
 ---@param state IconAnimationState
 ---@param newStateIdx number
 local function setIndicatorState(state, newStateIdx)
@@ -387,14 +379,9 @@ end
 ---@param state IconAnimationState
 ---@param dt integer
 local function updateIndicatorState(state, isEnabled, dt)
-	if isEnabled then
-		if state.currState == nil then
-			print("SET THE STATE")
-			setIndicatorState(state, 1)
-		end
-	else		
-		--resetIndicatorState(state)
-		--return
+	if isEnabled and state.currState == nil then
+		setIndicatorState(state, 1)
+		return
 	end
 
 	if state.currState ~= nil then
@@ -402,7 +389,6 @@ local function updateIndicatorState(state, isEnabled, dt)
 			state.ratio = math.min( state.ratio + dt, state.duration )
 		else
 			if state.nextState ~= nil then
-				print("STATE RESET")
 				setIndicatorState(state, state.nextState)
 			else
 				resetIndicatorState(state)
@@ -1375,11 +1361,11 @@ function PortalGun:client_onReload()
 		return true
 	end
 
-	if self.leftIndicatorState.currState == GUI_ANIM_STATE_IDLE then
+	if self.leftIndicatorState.currState == GUI_ANIM_STATE_OPEN or self.leftIndicatorState.currState == GUI_ANIM_STATE_IDLE then
 		setIndicatorState(self.leftIndicatorState, GUI_ANIM_STATE_POP)
 	end
 
-	if self.rightIndicatorState.currState == GUI_ANIM_STATE_IDLE then
+	if self.rightIndicatorState.currState == GUI_ANIM_STATE_OPEN or self.rightIndicatorState.currState == GUI_ANIM_STATE_IDLE then
 		setIndicatorState(self.rightIndicatorState, GUI_ANIM_STATE_POP)
 	end
 
