@@ -47,6 +47,8 @@ dofile( "$SURVIVAL_DATA/Scripts/game/survival_projectiles.lua" )
 PortalGun = class()
 PortalGun.max_portal_count = 2
 
+local GUI_ANIM_PRELOADED = false
+
 local GUI_ANIM_STATE_OPEN = 1
 local GUI_ANIM_STATE_IDLE = 2
 local GUI_ANIM_STATE_POP = 3
@@ -78,6 +80,50 @@ local GUI_ANIM_STATES =
 		interruptable = false
 	}
 }
+
+local PortanusPreloadData = {
+	Anchor = "Center",
+	Childs = {},
+	Skin = "PanelEmpty",
+	Type = "Widget",
+	Name = "BackPanel",
+	width = 160,
+	height = 80,
+	NeedKey = false,
+	NeedMouse = false,
+	x = 0,
+	y = 0
+}
+
+for _, v in pairs(GUI_ANIM_STATES) do
+	for i = v.minFrame, v.maxFrame - v.minFrame do
+		PortanusPreloadData.Childs[#PortanusPreloadData.Childs+1] = {
+			Childs = {},
+			ImageTexture = v.frameName:format("LMB", "LMB", i),
+			NeedKey = false,
+			NeedMouse = false,
+			Skin = "ImageBox",
+			Type = "ImageBox",
+			height = 1,
+			width = 1,
+			x = 0,
+			y = 0
+		}
+
+		PortanusPreloadData.Childs[#PortanusPreloadData.Childs+1] = {
+			Childs = {},
+			ImageTexture = v.frameName:format("RMB", "RMB", i),
+			NeedKey = false,
+			NeedMouse = false,
+			Skin = "ImageBox",
+			Type = "ImageBox",
+			height = 1,
+			width = 1,
+			x = 0,
+			y = 0
+		}
+	end
+end
 
 local PortanusGuiData = {}
 PortanusGuiData.root = {
@@ -402,6 +448,11 @@ local portal_color2 = sm.color.new(0x00cc58ff)
 local portal_color_vec1 = sm.vec3.new(portal_color1.r, portal_color1.g, portal_color1.b)
 local portal_color_vec2 = sm.vec3.new(portal_color2.r, portal_color2.g, portal_color2.b)
 function PortalGun:client_onUpdate( dt )
+	if not GUI_ANIM_PRELOADED then
+		GUI_ANIM_PRELOADED = true
+		self.portanusGui:render(PortanusPreloadData)
+	end
+
 	if self.tool:isEquipped() and self.tool:isLocal() then
 		--self.indicatorAlpha = math.min( (self.indicatorAlpha or 0) + dt * 2.0, 1.0 )
 		updateIndicatorState(self.leftIndicatorState, self.client_portals[1] ~= nil, dt)
